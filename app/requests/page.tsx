@@ -192,7 +192,9 @@ export default function RequestsPage() {
               <Paper key={request.id} elevation={2} sx={{ p: 3 }}>
                 <Typography variant="h6">{request.itemTitle}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Request from {request.borrowerName} • {new Date(request.createdAt.toMillis()).toLocaleDateString()}
+                  Request from {request.borrowerName} • {new Date(
+                    "toMillis" in request.createdAt ? request.createdAt.toMillis() : request.createdAt.getTime()
+                  ).toLocaleDateString()}
                 </Typography>
 
                 <Box sx={{ my: 2 }}>
@@ -244,7 +246,9 @@ export default function RequestsPage() {
               <Paper key={request.id} elevation={2} sx={{ p: 3 }}>
                 <Typography variant="h6">{request.itemTitle}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Owner: {request.ownerName} • {new Date(request.createdAt.toMillis()).toLocaleDateString()}
+                  Owner: {request.ownerName} • {new Date(
+                    "toMillis" in request.createdAt ? request.createdAt.toMillis() : request.createdAt.getTime()
+                  ).toLocaleDateString()}
                 </Typography>
 
                 <Box sx={{ my: 2 }}>

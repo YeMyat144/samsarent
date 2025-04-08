@@ -8,6 +8,7 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  type UserCredential
 } from "firebase/auth"
 import { auth } from "./firebase"
 import { createUser } from "./firestore"
@@ -16,7 +17,7 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   signup: (email: string, password: string, name: string) => Promise<void>
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<UserCredential> // Correct return type
   logout: () => Promise<void>
 }
 
@@ -24,8 +25,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signup: async () => {},
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { return {} as UserCredential }, // Default empty return type
+  logout: async () => {}
 })
 
 export const useAuth = () => useContext(AuthContext)

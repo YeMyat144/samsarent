@@ -37,11 +37,12 @@ export const getUser = async (userId: string) => {
   const userSnap = await getDoc(userRef)
 
   if (userSnap.exists()) {
-    return { id: userSnap.id, ...userSnap.data() } as User
+    return { id: userSnap.id, ...userSnap.data() } as unknown as User
   }
 
   return null
 }
+
 
 // Item operations
 export const addItem = async (itemData: Omit<Item, "id">) => {
