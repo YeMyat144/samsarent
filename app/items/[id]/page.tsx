@@ -127,8 +127,8 @@ export default function ItemDetailPage() {
         <Divider sx={{ my: 3 }} />
 
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Description
+          <Typography display="flex" variant="h6" gutterBottom>
+            Description(About, BorrowDays)
           </Typography>
           <Typography variant="body1">{item.description}</Typography>
         </Box>

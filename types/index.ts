@@ -29,4 +29,6 @@ export interface BorrowRequest {
   ownerName: string
   status: "pending" | "approved" | "rejected"
   createdAt: Date | Timestamp
+  deliveryMessage?: string
+  paymentRequired?: boolean
 }

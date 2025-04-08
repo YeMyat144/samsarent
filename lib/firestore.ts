@@ -137,7 +137,23 @@ export const getBorrowRequests = async (userId: string) => {
   }
 }
 
-export const updateBorrowRequest = async (requestId: string, status: "approved" | "rejected") => {
+export const updateBorrowRequest = async (
+  requestId: string,
+  status: "approved" | "rejected",
+  deliveryMessage?: string,
+  paymentRequired?: boolean,
+) => {
   const requestRef = doc(db, "borrowRequests", requestId)
-  await updateDoc(requestRef, { status })
+
+  const updateData: any = { status }
+
+  if (deliveryMessage) {
+    updateData.deliveryMessage = deliveryMessage
+  }
+
+  if (paymentRequired !== undefined) {
+    updateData.paymentRequired = paymentRequired
+  }
+
+  await updateDoc(requestRef, updateData)
 }

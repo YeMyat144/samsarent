@@ -12,10 +12,20 @@ import Tabs from "@mui/material/Tabs"
 import Tab from "@mui/material/Tab"
 import Chip from "@mui/material/Chip"
 import CircularProgress from "@mui/material/CircularProgress"
+import TextField from "@mui/material/TextField"
+import Dialog from "@mui/material/Dialog"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContent from "@mui/material/DialogContent"
+import DialogContentText from "@mui/material/DialogContentText"
+import DialogTitle from "@mui/material/DialogTitle"
+import FormControlLabel from "@mui/material/FormControlLabel"
+import Checkbox from "@mui/material/Checkbox"
+import Snackbar from "@mui/material/Snackbar"
+import Alert from "@mui/material/Alert"
 import { useAuth } from "@/lib/auth-context"
 import { getBorrowRequests, updateBorrowRequest, updateItemAvailability } from "@/lib/firestore"
 import type { BorrowRequest } from "@/types"
-import {Navbar} from "@/components/navbar"
+import { Navbar } from "@/components/navbar"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -38,6 +48,17 @@ export default function RequestsPage() {
   const [outgoingRequests, setOutgoingRequests] = useState<BorrowRequest[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [tabValue, setTabValue] = useState(0)
+  const [approvalDialog, setApprovalDialog] = useState<{ open: boolean; request: BorrowRequest | null }>({
+    open: false,
+    request: null,
+  })
+  const [deliveryMessage, setDeliveryMessage] = useState("")
+  const [paymentRequired, setPaymentRequired] = useState(false)
+  const [notification, setNotification] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  })
   const { user } = useAuth()
 
   useEffect(() => {
@@ -59,24 +80,77 @@ export default function RequestsPage() {
     fetchRequests()
   }, [user])
 
-  const handleRequestAction = async (requestId: string, status: "approved" | "rejected", itemId?: string) => {
+  const handleRequestAction = async (request: BorrowRequest, status: "approved" | "rejected") => {
     try {
-      await updateBorrowRequest(requestId, status)
+      if (status === "approved") {
+        // Open the approval dialog to get delivery information
+        setApprovalDialog({ open: true, request })
+      } else {
+        // Directly reject the request
+        await updateBorrowRequest(request.id, status)
 
-      // If approved, update item availability
-      if (status === "approved" && itemId) {
-        await updateItemAvailability(itemId, false)
+        // Update local state
+        setIncomingRequests((prev) => prev.map((req) => (req.id === request.id ? { ...req, status } : req)))
+
+        showNotification("Request rejected successfully", "success")
       }
+    } catch (error: any) {
+      console.error("Error updating request:", error)
+      showNotification(error.message || "Failed to process request", "error")
+    }
+  }
+
+  const handleApproveWithDelivery = async () => {
+    if (!approvalDialog.request) return
+
+    try {
+      // Update the request with delivery information
+      await updateBorrowRequest(approvalDialog.request.id, "approved", deliveryMessage, paymentRequired)
+
+      // Update item availability
+      await updateItemAvailability(approvalDialog.request.itemId, false)
 
       // Update local state
-      setIncomingRequests((prev) => prev.map((req) => (req.id === requestId ? { ...req, status } : req)))
-    } catch (error) {
-      console.error("Error updating request:", error)
+      setIncomingRequests((prev) =>
+        prev.map((req) =>
+          req.id === approvalDialog.request?.id
+            ? { ...req, status: "approved", deliveryMessage, paymentRequired }
+            : req,
+        ),
+      )
+
+      // Close the dialog and reset form
+      setApprovalDialog({ open: false, request: null })
+      setDeliveryMessage("")
+      setPaymentRequired(false)
+
+      showNotification("Request approved successfully! The borrower has been notified.", "success")
+    } catch (error: any) {
+      console.error("Error approving request:", error)
+      showNotification(error.message || "Failed to approve request", "error")
     }
   }
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
+  }
+
+  const closeApprovalDialog = () => {
+    setApprovalDialog({ open: false, request: null })
+    setDeliveryMessage("")
+    setPaymentRequired(false)
+  }
+
+  const showNotification = (message: string, severity: "success" | "error") => {
+    setNotification({
+      open: true,
+      message,
+      severity,
+    })
+  }
+
+  const closeNotification = () => {
+    setNotification({ ...notification, open: false })
   }
 
   if (isLoading) {
@@ -98,7 +172,7 @@ export default function RequestsPage() {
   return (
     <Container sx={{ py: 4 }}>
       <Navbar />
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={4} mt={7}>
+      <Typography mt={7} variant="h4" component="h1" fontWeight="bold" mb={4}>
         Borrow Requests
       </Typography>
 
@@ -131,15 +205,26 @@ export default function RequestsPage() {
                   />
                 </Box>
 
+                {request.status === "approved" && request.deliveryMessage && (
+                  <Box sx={{ mt: 2, mb: 3, p: 2, bgcolor: "rgba(25, 118, 210, 0.08)", borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Delivery Information:
+                    </Typography>
+                    <Typography variant="body2">{request.deliveryMessage}</Typography>
+                    {request.paymentRequired && (
+                      <Typography variant="body2" sx={{ mt: 1, fontWeight: "medium" }}>
+                        Payment will be required upon delivery.
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+
                 {request.status === "pending" && (
                   <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-                    <Button variant="outlined" onClick={() => handleRequestAction(request.id, "rejected")}>
+                    <Button variant="outlined" onClick={() => handleRequestAction(request, "rejected")}>
                       Decline
                     </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => handleRequestAction(request.id, "approved", request.itemId)}
-                    >
+                    <Button variant="contained" onClick={() => handleRequestAction(request, "approved")}>
                       Approve
                     </Button>
                   </Box>
@@ -171,11 +256,80 @@ export default function RequestsPage() {
                     size="small"
                   />
                 </Box>
+
+                {request.status === "approved" && request.deliveryMessage && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: "rgba(25, 118, 210, 0.08)", borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Delivery Information:
+                    </Typography>
+                    <Typography variant="body2">{request.deliveryMessage}</Typography>
+                    {request.paymentRequired && (
+                      <Typography variant="body2" sx={{ mt: 1, fontWeight: "medium" }}>
+                        Payment will be required upon delivery.
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Paper>
             ))}
           </Box>
         )}
       </TabPanel>
+
+      {/* Approval Dialog */}
+      <Dialog open={approvalDialog.open} onClose={closeApprovalDialog} fullWidth maxWidth="sm">
+        <DialogTitle>Approve Request</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Please provide delivery information for {approvalDialog.request?.borrowerName}. This will be sent as a
+            notification when you approve the request.
+          </DialogContentText>
+
+          <TextField
+            autoFocus
+            margin="dense"
+            id="deliveryMessage"
+            label="Delivery Day and Time"
+            fullWidth
+            multiline
+            rows={4}
+            value={deliveryMessage}
+            onChange={(e) => setDeliveryMessage(e.target.value)}
+            placeholder="Example: I can deliver the item on Saturday at 2:00 PM at the coffee shop on Main Street."
+            required
+            sx={{ mb: 2 }}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={paymentRequired}
+                onChange={(e) => setPaymentRequired(e.target.checked)}
+                name="paymentRequired"
+              />
+            }
+            label="Payment required upon delivery"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeApprovalDialog}>Cancel</Button>
+          <Button
+            onClick={handleApproveWithDelivery}
+            variant="contained"
+            color="primary"
+            disabled={!deliveryMessage.trim()}
+          >
+            Approve
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Notification Snackbar */}
+      <Snackbar open={notification.open} autoHideDuration={6000} onClose={closeNotification}>
+        <Alert onClose={closeNotification} severity={notification.severity} sx={{ width: "100%" }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Container>
   )
 }
