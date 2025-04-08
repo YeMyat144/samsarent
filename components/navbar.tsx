@@ -2,7 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import AppBar from "@mui/material/AppBar"
+import Toolbar from "@mui/material/Toolbar"
+import Typography from "@mui/material/Typography"
+import Button from "@mui/material/Button"
+import Box from "@mui/material/Box"
 import { useAuth } from "@/lib/auth-context"
 
 export function Navbar() {
@@ -10,37 +14,45 @@ export function Navbar() {
   const { user, logout } = useAuth()
 
   return (
-    <header className="border-b">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl">
+    <AppBar color="default" sx={{ backgroundColor: "white",boxShadow: "none", borderBottom: "1px solid #e0e0e0" }}>
+      <Toolbar>
+        <Typography
+          variant="h6"
+          sx={{
+            flexGrow: 1,
+            fontWeight: "bold",
+            color: "text.primary",
+            textDecoration: "none",
+          }}
+        >
           R&B Marketplace
-        </Link>
+        </Typography>
 
-        <nav className="flex items-center gap-6">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {user ? (
             <>
-              <Link href="/dashboard" className={pathname === "/dashboard" ? "font-medium" : "text-muted-foreground"}>
+              <Button component={Link} href="/dashboard" color={pathname === "/dashboard" ? "primary" : "inherit"}>
                 Browse
-              </Link>
-              <Link href="/requests" className={pathname === "/requests" ? "font-medium" : "text-muted-foreground"}>
+              </Button>
+              <Button component={Link} href="/requests" color={pathname === "/requests" ? "primary" : "inherit"}>
                 Requests
-              </Link>
-              <Button variant="outline" size="sm" onClick={logout}>
+              </Button>
+              <Button variant="outlined" size="small" onClick={logout}>
                 Logout
               </Button>
             </>
           ) : (
             <>
-              <Link href="/login" className={pathname === "/login" ? "font-medium" : "text-muted-foreground"}>
+              <Button component={Link} href="/login" color={pathname === "/login" ? "primary" : "inherit"}>
                 Login
-              </Link>
-              <Button asChild size="sm">
-                <Link href="/signup">Sign Up</Link>
+              </Button>
+              <Button component={Link} href="/signup" variant="contained" size="small">
+                Sign Up
               </Button>
             </>
           )}
-        </nav>
-      </div>
-    </header>
+        </Box>
+      </Toolbar>
+    </AppBar>
   )
 }

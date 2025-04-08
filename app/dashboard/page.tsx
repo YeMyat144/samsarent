@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import Typography from "@mui/material/Typography"
+import Container from "@mui/material/Container"
+import CircularProgress from "@mui/material/CircularProgress"
 import { useAuth } from "@/lib/auth-context"
 import { getItems } from "@/lib/firestore"
 import { ItemCard } from "@/components/item-card"
 import type { Item } from "@/types"
+import {Navbar} from "@/components/navbar"
 
 export default function Dashboard() {
   const { user, loading } = useAuth()
@@ -24,7 +29,6 @@ export default function Dashboard() {
           }
         } catch (error: any) {
           console.error("Error fetching items:", error)
-          // You could add state for error handling if needed
         } finally {
           setIsLoading(false)
         }
@@ -35,43 +39,56 @@ export default function Dashboard() {
   }, [user, loading])
 
   if (loading || isLoading) {
-    return <div className="container mx-auto p-4">Loading...</div>
+    return (
+      <Container sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+        <CircularProgress />
+      </Container>
+    )
   }
 
   if (!user) {
     return (
-      <div className="container mx-auto p-4">
-        <p>Please login to view this page</p>
-        <Button asChild className="mt-4">
-          <Link href="/login">Login</Link>
+      <Container sx={{ py: 4 }}>
+        <Typography variant="body1" gutterBottom>
+          Please login to view this page
+        </Typography>
+        <Button variant="contained" component={Link} href="/login" sx={{ mt: 2 }}>
+          Login
         </Button>
-      </div>
+      </Container>
     )
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Available Items</h1>
-        <Button asChild>
-          <Link href="/items/new">Add New Item</Link>
+    <Container sx={{ py: 4 }}>
+      <Navbar/>
+      <Box sx={{ mt:7, display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          Available Items
+        </Typography>
+        <Button variant="contained" component={Link} href="/items/new">
+          Add New Item
         </Button>
-      </div>
+      </Box>
 
       {items.length === 0 ? (
-        <div className="text-center py-10">
-          <p className="text-lg mb-4">No items available yet</p>
-          <Button asChild>
-            <Link href="/items/new">Be the first to add an item</Link>
+        <Box sx={{ textAlign: "center", py: 5 }}>
+          <Typography variant="h6" gutterBottom>
+            No items available yet
+          </Typography>
+          <Button variant="contained" component={Link} href="/items/new" sx={{ mt: 2 }}>
+            Be the first to add an item
           </Button>
-        </div>
+        </Box>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} />
+            <Box key={item.id} sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" } }}>
+              <ItemCard item={item} />
+            </Box>
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Container>
   )
 }

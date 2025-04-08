@@ -1,15 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useRouter, useParams } from "next/navigation"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import Typography from "@mui/material/Typography"
+import Paper from "@mui/material/Paper"
+import Container from "@mui/material/Container"
+import Chip from "@mui/material/Chip"
+import Divider from "@mui/material/Divider"
+import CircularProgress from "@mui/material/CircularProgress"
+import Alert from "@mui/material/Alert"
 import { useAuth } from "@/lib/auth-context"
 import { getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
 import type { Item } from "@/types"
+import { Navbar } from "@/components/navbar"
 
-export default function ItemDetailPage({ params }: { params: { id: string } }) {
+export default function ItemDetailPage() {
+  const params = useParams()
+  const id = params.id as string
   const [item, setItem] = useState<Item | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -21,7 +30,7 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
     const fetchItem = async () => {
       try {
         setIsLoading(true)
-        const fetchedItem = await getItem(params.id)
+        const fetchedItem = await getItem(params.id as string)
         setItem(fetchedItem)
       } catch (error: any) {
         console.error("Error fetching item:", error)
@@ -74,60 +83,90 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
   }
 
   if (isLoading) {
-    return <div className="container mx-auto p-4">Loading...</div>
+    return (
+      <Container sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+        <CircularProgress />
+      </Container>
+    )
   }
 
   if (error) {
-    return <div className="container mx-auto p-4 text-red-500">{error}</div>
+    return (
+      <Container sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    )
   }
 
   if (!item) {
-    return <div className="container mx-auto p-4">Item not found</div>
+    return (
+      <Container sx={{ py: 4 }}>
+        <Typography>Item not found</Typography>
+      </Container>
+    )
   }
 
   const isOwner = user && user.uid === item.ownerId
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-2xl">{item.title}</CardTitle>
-              <CardDescription>Listed by {item.ownerName}</CardDescription>
-            </div>
-            <Badge variant={item.available ? "default" : "secondary"}>
-              {item.available ? "Available" : "Unavailable"}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-1">Description</h3>
-            <p>{item.description}</p>
-          </div>
-          <div className="flex justify-between">
-            <div>
-              <h3 className="font-semibold mb-1">Category</h3>
-              <p className="capitalize">{item.category}</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1">Daily Price</h3>
-              <p>${item.price.toFixed(2)}</p>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.push("/dashboard")}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Navbar />
+      <Paper elevation={3} sx={{ p: 6 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {item.title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Listed by {item.ownerName}
+            </Typography>
+          </Box>
+          <Chip label={item.available ? "Available" : "Unavailable"} color={item.available ? "primary" : "default"} />
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Description
+          </Typography>
+          <Typography variant="body1">{item.description}</Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Category
+            </Typography>
+            <Typography variant="body1" sx={{ textTransform: "capitalize" }}>
+              {item.category}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Daily Price
+            </Typography>
+            <Typography variant="body1">${item.price.toFixed(2)}</Typography>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+          <Button variant="outlined" onClick={() => router.push("/dashboard")}>
             Back to Listings
           </Button>
 
           {isOwner ? (
-            <Button variant="destructive" onClick={handleDeleteItem}>
+            <Button variant="contained" color="error" onClick={handleDeleteItem}>
               Delete Item
             </Button>
           ) : (
-            <Button onClick={handleBorrowRequest} disabled={!item.available || requestSent || !user}>
+            <Button
+              variant="contained"
+              onClick={handleBorrowRequest}
+              disabled={!item.available || requestSent || !user}
+            >
               {requestSent
                 ? "Request Sent"
                 : !user
@@ -137,8 +176,8 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
                     : "Request to Borrow"}
             </Button>
           )}
-        </CardFooter>
-      </Card>
-    </div>
+        </Box>
+      </Paper>
+    </Container>
   )
 }

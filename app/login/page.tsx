@@ -1,14 +1,16 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import TextField from "@mui/material/TextField"
+import Typography from "@mui/material/Typography"
+import Paper from "@mui/material/Paper"
+import Container from "@mui/material/Container"
+import Alert from "@mui/material/Alert"
 import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
@@ -31,43 +33,65 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-screen py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <Button type="submit" className="w-full">
-              Login
-            </Button>
-            <p className="text-sm text-center">
+    <Container
+      maxWidth="sm"
+      sx={{ py: 8, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}
+    >
+      <Paper elevation={3} sx={{ width: "100%", p: 4 }}>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Login
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>
+          Enter your credentials to access your account
+        </Typography>
+
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="Email Address"
+            name="email"
+            autoComplete="email"
+            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+            Login
+          </Button>
+
+          <Box sx={{ textAlign: "center" }}>
+            <Typography variant="body2">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
+              <Link href="/signup" style={{ color: "primary", textDecoration: "none" }}>
                 Sign up
               </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   )
 }

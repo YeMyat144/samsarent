@@ -1,23 +1,29 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import Box from "@mui/material/Box"
+import Typography from "@mui/material/Typography"
+import Button from "@mui/material/Button"
+import Container from "@mui/material/Container"
+import Stack from "@mui/material/Stack"
 
 export default function Home() {
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Rent & Borrow Marketplace</h1>
-      <div className="space-y-4">
-        <p className="text-lg">
+    <Container maxWidth="lg" sx={{ py: 8 }}>
+      <Typography variant="h3" component="h1" fontWeight="bold" mb={3}>
+        Rent & Borrow Marketplace
+      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" mb={3}>
           Welcome to our marketplace where you can rent or borrow items from others in your community.
-        </p>
-        <div className="flex gap-4">
-          <Button asChild>
-            <Link href="/login">Login</Link>
+        </Typography>
+        <Stack direction="row" spacing={2}>
+          <Button variant="contained" component={Link} href="/login">
+            Login
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/signup">Sign Up</Link>
+          <Button variant="outlined" component={Link} href="/signup">
+            Sign Up
           </Button>
-        </div>
-      </div>
-    </main>
+        </Stack>
+      </Box>
+    </Container>
   )
 }

@@ -1,17 +1,28 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import TextField from "@mui/material/TextField"
+import Typography from "@mui/material/Typography"
+import Paper from "@mui/material/Paper"
+import Container from "@mui/material/Container"
+import Alert from "@mui/material/Alert"
+import MenuItem from "@mui/material/MenuItem"
 import { useAuth } from "@/lib/auth-context"
 import { addItem } from "@/lib/firestore"
+import { Navbar } from "@/components/navbar"
+
+const categories = [
+  { value: "electronics", label: "Electronics" },
+  { value: "tools", label: "Tools" },
+  { value: "clothing", label: "Clothing" },
+  { value: "furniture", label: "Furniture" },
+  { value: "books", label: "Books" },
+  { value: "other", label: "Other" },
+]
 
 export default function NewItemPage() {
   const [title, setTitle] = useState("")
@@ -55,64 +66,83 @@ export default function NewItemPage() {
   }
 
   return (
-    <div className="container mx-auto flex items-center justify-center py-8">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Add New Item</CardTitle>
-          <CardDescription>List an item for others to rent or borrow</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="tools">Tools</SelectItem>
-                  <SelectItem value="clothing">Clothing</SelectItem>
-                  <SelectItem value="furniture">Furniture</SelectItem>
-                  <SelectItem value="books">Books</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="price">Daily Price ($)</Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Item"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Navbar />
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Add New Item
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>
+          List an item for others to rent or borrow
+        </Typography>
+
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="title"
+            label="Title"
+            name="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            multiline
+            rows={4}
+            id="description"
+            label="Description"
+            name="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+
+          <TextField
+            select
+            margin="normal"
+            required
+            fullWidth
+            id="category"
+            label="Category"
+            name="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {categories.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="price"
+            label="Daily Price ($)"
+            name="price"
+            type="number"
+            inputProps={{ min: 0, step: 0.01 }}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+
+          <Button type="submit" fullWidth variant="contained" disabled={isLoading} sx={{ mt: 3 }}>
+            {isLoading ? "Adding..." : "Add Item"}
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   )
 }
