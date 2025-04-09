@@ -126,7 +126,7 @@ export default function ItemDetailPage() {
   const isOwner = user && user.uid === item.ownerId
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ mt:7, py: 4 }}>
       <Navbar />
         <Box sx={{mt:6, display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
           {/* Image Section */}

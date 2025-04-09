@@ -100,9 +100,8 @@ export default function NewItemPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h5" component="h1" gutterBottom>
+    <Container maxWidth="sm" sx={{ mt:3, py: 8 }}>
+       <Typography variant="h5" component="h1" gutterBottom>
           Add New Item
         </Typography>
         <Typography variant="body2" color="text.secondary" mb={3}>
@@ -221,7 +220,6 @@ export default function NewItemPage() {
             {isLoading ? "Adding..." : "Add Item"}
           </Button>
         </Box>
-      </Paper>
     </Container>
   )
 }

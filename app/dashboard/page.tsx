@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import {Navbar} from "@/components/navbar"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Box from "@mui/material/Box"
@@ -99,9 +98,8 @@ export default function Dashboard() {
   }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Navbar />
-      <Box sx={{ mt:7, display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+    <Container sx={{ mt:7, py: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
         <Tabs
           value={selectedCategory}

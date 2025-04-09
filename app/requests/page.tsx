@@ -25,7 +25,6 @@ import Alert from "@mui/material/Alert"
 import { useAuth } from "@/lib/auth-context"
 import { getBorrowRequests, updateBorrowRequest, updateItemAvailability } from "@/lib/firestore"
 import type { BorrowRequest } from "@/types"
-import { Navbar } from "@/components/navbar"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -52,7 +51,9 @@ export default function RequestsPage() {
     open: false,
     request: null,
   })
-  const [deliveryMessage, setDeliveryMessage] = useState("")
+  const [deliveryLocation, setDeliveryLocation] = useState("")
+  const [deliveryDateTime, setDeliveryDateTime] = useState("")
+  const [additionalInfo, setAdditionalInfo] = useState("")
   const [paymentRequired, setPaymentRequired] = useState(false)
   const [notification, setNotification] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
     open: false,
@@ -85,6 +86,11 @@ export default function RequestsPage() {
       if (status === "approved") {
         // Open the approval dialog to get delivery information
         setApprovalDialog({ open: true, request })
+        // Reset form fields
+        setDeliveryLocation("")
+        setDeliveryDateTime("")
+        setAdditionalInfo("")
+        setPaymentRequired(false)
       } else {
         // Directly reject the request
         await updateBorrowRequest(request.id, status)
@@ -103,7 +109,18 @@ export default function RequestsPage() {
   const handleApproveWithDelivery = async () => {
     if (!approvalDialog.request) return
 
+    // Validate required fields
+    if (!deliveryLocation.trim() || !deliveryDateTime.trim()) {
+      showNotification("Please fill in both location and day/time fields", "error")
+      return
+    }
+
     try {
+      // Format the delivery message
+      const deliveryMessage = `I will deliver at ${deliveryLocation} on ${deliveryDateTime}.${
+        additionalInfo ? `\n\nAdditional information: ${additionalInfo}` : ""
+      }`
+
       // Update the request with delivery information
       await updateBorrowRequest(approvalDialog.request.id, "approved", deliveryMessage, paymentRequired)
 
@@ -121,7 +138,9 @@ export default function RequestsPage() {
 
       // Close the dialog and reset form
       setApprovalDialog({ open: false, request: null })
-      setDeliveryMessage("")
+      setDeliveryLocation("")
+      setDeliveryDateTime("")
+      setAdditionalInfo("")
       setPaymentRequired(false)
 
       showNotification("Request approved successfully! The borrower has been notified.", "success")
@@ -137,7 +156,9 @@ export default function RequestsPage() {
 
   const closeApprovalDialog = () => {
     setApprovalDialog({ open: false, request: null })
-    setDeliveryMessage("")
+    setDeliveryLocation("")
+    setDeliveryDateTime("")
+    setAdditionalInfo("")
     setPaymentRequired(false)
   }
 
@@ -170,9 +191,8 @@ export default function RequestsPage() {
   }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Navbar />
-      <Typography mt={7} variant="h4" component="h1" fontWeight="bold" mb={4}>
+    <Container sx={{ mt:7, py: 4 }}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={4}>
         Borrow Requests
       </Typography>
 
@@ -192,9 +212,7 @@ export default function RequestsPage() {
               <Paper key={request.id} elevation={2} sx={{ p: 3 }}>
                 <Typography variant="h6">{request.itemTitle}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Request from {request.borrowerName} • {new Date(
-                    "toMillis" in request.createdAt ? request.createdAt.toMillis() : request.createdAt.getTime()
-                  ).toLocaleDateString()}
+                  Request from {request.borrowerName} • {new Date((request.createdAt as any)?.toMillis?.() || request.createdAt).toLocaleDateString()}
                 </Typography>
 
                 <Box sx={{ my: 2 }}>
@@ -212,7 +230,9 @@ export default function RequestsPage() {
                     <Typography variant="subtitle2" gutterBottom>
                       Delivery Information:
                     </Typography>
-                    <Typography variant="body2">{request.deliveryMessage}</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
+                      {request.deliveryMessage}
+                    </Typography>
                     {request.paymentRequired && (
                       <Typography variant="body2" sx={{ mt: 1, fontWeight: "medium" }}>
                         Payment will be required upon delivery.
@@ -246,9 +266,7 @@ export default function RequestsPage() {
               <Paper key={request.id} elevation={2} sx={{ p: 3 }}>
                 <Typography variant="h6">{request.itemTitle}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Owner: {request.ownerName} • {new Date(
-                    "toMillis" in request.createdAt ? request.createdAt.toMillis() : request.createdAt.getTime()
-                  ).toLocaleDateString()}
+                  Owner: {request.ownerName} • {new Date((request.createdAt as any)?.toMillis?.() || request.createdAt).toLocaleDateString()}
                 </Typography>
 
                 <Box sx={{ my: 2 }}>
@@ -266,7 +284,9 @@ export default function RequestsPage() {
                     <Typography variant="subtitle2" gutterBottom>
                       Delivery Information:
                     </Typography>
-                    <Typography variant="body2">{request.deliveryMessage}</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
+                      {request.deliveryMessage}
+                    </Typography>
                     {request.paymentRequired && (
                       <Typography variant="body2" sx={{ mt: 1, fontWeight: "medium" }}>
                         Payment will be required upon delivery.
@@ -280,7 +300,7 @@ export default function RequestsPage() {
         )}
       </TabPanel>
 
-      {/* Approval Dialog */}
+      {/* Approval Dialog with Structured Form */}
       <Dialog open={approvalDialog.open} onClose={closeApprovalDialog} fullWidth maxWidth="sm">
         <DialogTitle>Approve Request</DialogTitle>
         <DialogContent>
@@ -289,20 +309,57 @@ export default function RequestsPage() {
             notification when you approve the request.
           </DialogContentText>
 
-          <TextField
-            autoFocus
-            margin="dense"
-            id="deliveryMessage"
-            label="Delivery Day and Time"
-            fullWidth
-            multiline
-            rows={4}
-            value={deliveryMessage}
-            onChange={(e) => setDeliveryMessage(e.target.value)}
-            placeholder="Example: I can deliver the item on Saturday at 2:00 PM at the coffee shop on Main Street."
-            required
-            sx={{ mb: 2 }}
-          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              autoFocus
+              required
+              margin="dense"
+              id="deliveryLocation"
+              label="Delivery Location"
+              fullWidth
+              value={deliveryLocation}
+              onChange={(e) => setDeliveryLocation(e.target.value)}
+              placeholder="e.g., Coffee shop on Main Street, Your address, etc."
+            />
+
+            <TextField
+              required
+              margin="dense"
+              id="deliveryDateTime"
+              label="Day and Time"
+              fullWidth
+              value={deliveryDateTime}
+              onChange={(e) => setDeliveryDateTime(e.target.value)}
+              placeholder="e.g., Saturday at 2:00 PM, Tomorrow at noon, etc."
+            />
+
+            <TextField
+              margin="dense"
+              id="additionalInfo"
+              label="Additional Information (Optional)"
+              fullWidth
+              multiline
+              rows={2}
+              value={additionalInfo}
+              onChange={(e) => setAdditionalInfo(e.target.value)}
+              placeholder="Any other details the borrower should know"
+            />
+          </Box>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Preview:
+            </Typography>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: "background.default" }}>
+              <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
+                {deliveryLocation && deliveryDateTime
+                  ? `I will deliver at ${deliveryLocation} on ${deliveryDateTime}.${
+                      additionalInfo ? `\n\nAdditional information: ${additionalInfo}` : ""
+                    }`
+                  : "Please fill in the location and day/time fields to see preview."}
+              </Typography>
+            </Paper>
+          </Box>
 
           <FormControlLabel
             control={
@@ -313,6 +370,7 @@ export default function RequestsPage() {
               />
             }
             label="Payment required upon delivery"
+            sx={{ mt: 2 }}
           />
         </DialogContent>
         <DialogActions>
@@ -321,7 +379,7 @@ export default function RequestsPage() {
             onClick={handleApproveWithDelivery}
             variant="contained"
             color="primary"
-            disabled={!deliveryMessage.trim()}
+            disabled={!deliveryLocation.trim() || !deliveryDateTime.trim()}
           >
             Approve
           </Button>
