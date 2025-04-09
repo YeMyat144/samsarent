@@ -11,6 +11,11 @@ import CircularProgress from "@mui/material/CircularProgress"
 import Tabs from "@mui/material/Tabs"
 import Tab from "@mui/material/Tab"
 import Divider from "@mui/material/Divider"
+import TextField from "@mui/material/TextField"
+import InputAdornment from "@mui/material/InputAdornment"
+import SearchIcon from "@mui/icons-material/Search"
+import { useTheme, useMediaQuery } from "@mui/material"
+
 import { useAuth } from "@/lib/auth-context"
 import { getItems } from "@/lib/firestore"
 import { ItemCard } from "@/components/item-card"
@@ -26,11 +31,14 @@ const categoryLabels: Record<string, string> = {
 }
 
 export default function Dashboard() {
+  const theme = useTheme()
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"))
   const { user, loading } = useAuth()
   const [items, setItems] = useState<Item[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [categories, setCategories] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -58,10 +66,18 @@ export default function Dashboard() {
     setSelectedCategory(newValue)
   }
 
-  const filteredItems =
-    selectedCategory === "all"
-      ? items
-      : items.filter(item => item.category === selectedCategory)
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value.toLowerCase())
+  }
+
+  const filteredItems = items
+    .filter(item =>
+      selectedCategory === "all" ? true : item.category === selectedCategory
+    )
+    .filter(item =>
+      item.title.toLowerCase().includes(searchQuery) ||
+      item.description?.toLowerCase().includes(searchQuery)
+    )
 
   const itemsByCategory = items.reduce((acc, item) => {
     if (!acc[item.category]) {
@@ -93,42 +109,109 @@ export default function Dashboard() {
   }
 
   return (
-    <Container sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 } }}>
-      {/* Tabs and Button */}
-      <Box
+    <Container sx={{ py: 4, px: { xs: 1, sm: 2 } }}>
+      {/* Tabs, Search, and Add Button */}
+      <Box sx={{ mb: 2 }}>
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: isSmallScreen ? "column-reverse" : "row",
+      alignItems: isSmallScreen ? "stretch" : "center",
+      gap: 2,
+    }}
+  >
+    {/* Tabs Section (3/5 width on large screens) */}
+    <Box
+      sx={{
+        flex: isSmallScreen ? "none" : 3,
+        width: "100%",
+        overflowX: "auto",
+      }}
+    >
+      <Tabs
+        value={selectedCategory}
+        onChange={handleCategoryChange}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", md: "center" },
-          gap: 2,
-          mb: 4,
+          '& .MuiTab-root': {
+            minWidth: 'unset',
+            padding: isSmallScreen ? '6px 12px' : '12px 16px',
+            fontSize: isSmallScreen ? '0.75rem' : '0.875rem',
+          },
+          '& .MuiTabs-scrollButtons': {
+            width: '24px',
+            '&.Mui-disabled': {
+              opacity: 0.3,
+            },
+          },
         }}
       >
-        <Box sx={{ width: "100%" }}>
-          <Tabs
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-          >
-            <Tab label="All Categories" value="all" />
-            {categories.map(category => (
-              <Tab key={category} label={categoryLabels[category] || category} value={category} />
-            ))}
-          </Tabs>
-        </Box>
+        <Tab label="All" value="all" />
+        {categories.map(category => (
+          <Tab
+            key={category}
+            label={
+              isSmallScreen
+                ? categoryLabels[category]?.substring(0, 8) || category.substring(0, 8)
+                : categoryLabels[category] || category
+            }
+            value={category}
+          />
+        ))}
+      </Tabs>
+    </Box>
 
-        <Button
-          variant="contained"
-          component={Link}
-          href="/items/new"
-          sx={{ alignSelf: { xs: "stretch", md: "center" }, mt: { xs: 2, md: 0 } }}
-        >
-          Add 
-        </Button>
-      </Box>
+    {/* Search and Add Button Section (2/5 width on large screens) */}
+    <Box
+      sx={{
+        flex: isSmallScreen ? "none" : 2,
+        display: "flex",
+        flexDirection: isSmallScreen ? "column" : "row",
+        gap: 2,
+        alignItems: isSmallScreen ? "stretch" : "center",
+        width: "100%",
+      }}
+    >
+      <TextField
+        placeholder="Search items..."
+        size="small"
+        variant="outlined"
+        onChange={handleSearchChange}
+        fullWidth={isSmallScreen}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon color="primary" />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          flexGrow: 1,
+          maxWidth: isSmallScreen ? "100%" : "70%",
+          '& .MuiOutlinedInput-root': {
+            borderRadius: "40px",
+          },
+        }}
+      />
+
+      <Button
+        variant="contained"
+        component={Link}
+        href="/items/new"
+        sx={{
+          whiteSpace: "nowrap",
+          width: isSmallScreen ? "100%" : "25%",
+          flexShrink: 0,
+        }}
+      >
+        Add
+      </Button>
+    </Box>
+  </Box>
+</Box>
+
 
       {/* Main Content */}
       {items.length === 0 ? (
@@ -143,41 +226,64 @@ export default function Dashboard() {
       ) : filteredItems.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
           <Typography variant="h6" gutterBottom>
-            No items in this category
+            No items found
           </Typography>
           <Button variant="contained" component={Link} href="/items/new" sx={{ mt: 2 }}>
-            Add an item in this category
+            Add an item
           </Button>
         </Box>
       ) : selectedCategory === "all" ? (
         <Box>
-          {Object.entries(itemsByCategory).map(([category, categoryItems]) => (
-            <Box key={category} sx={{ mb: 6 }}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Typography variant="h5" component="h2" sx={{ textTransform: "capitalize" }}>
-                  {categoryLabels[category] || category}
-                </Typography>
-                <Divider sx={{ flex: 1, ml: 2 }} />
+          {Object.entries(itemsByCategory).map(([category, categoryItems]) => {
+            const visibleItems = categoryItems.filter(item =>
+              item.title.toLowerCase().includes(searchQuery) ||
+              item.description?.toLowerCase().includes(searchQuery)
+            )
+
+            if (visibleItems.length === 0) return null
+
+            return (
+              <Box key={category} sx={{ mb: 6 }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                  <Typography variant="h5" component="h2" sx={{ textTransform: "capitalize" }}>
+                    {categoryLabels[category] || category}
+                  </Typography>
+                  <Divider sx={{ flex: 1, ml: 2 }} />
+                </Box>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                  {visibleItems.map(item => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        width: {
+                          xs: "100%",
+                          sm: "calc(50% - 12px)",
+                          md: "calc(33.333% - 16px)",
+                          lg: "calc(25% - 18px)",
+                        },
+                      }}
+                    >
+                      <ItemCard item={item} />
+                    </Box>
+                  ))}
+                </Box>
               </Box>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                {categoryItems.map(item => (
-                  <Box
-                    key={item.id}
-                    sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" }, px: 1 }}
-                  >
-                    <ItemCard item={item} />
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          ))}
+            )
+          })}
         </Box>
       ) : (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
           {filteredItems.map(item => (
             <Box
               key={item.id}
-              sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" }, px: 1 }}
+              sx={{
+                width: {
+                  xs: "100%",
+                  sm: "calc(50% - 12px)",
+                  md: "calc(33.333% - 16px)",
+                  lg: "calc(25% - 18px)",
+                },
+              }}
             >
               <ItemCard item={item} />
             </Box>

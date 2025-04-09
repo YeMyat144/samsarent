@@ -2,6 +2,8 @@
 
 Samsarental is a platform where users can list their items for others to borrow and request to borrow items from other users. The application handles the entire borrowing lifecycle, from listing items to approving borrow requests and managing the borrowing process.
 
+![Samarental Demo](https://i.ibb.co/SD5CK4t7/demo.png)
+
 ## Features
 
 - **User Authentication**: Sign up and login functionality
@@ -39,20 +41,6 @@ Samsarental is a platform where users can list their items for others to borrow 
 6. **Specify Delivery**: When approving, provide delivery details
 7. **View Requests**: Track the status of your incoming and outgoing requests
 
-## Project Structure
-
-- `/app`: Next.js app router pages
-- `/components`: Reusable UI components
-- `/lib`: Utility functions and Firebase configuration
-- `/types`: TypeScript type definitions
-
-## Firebase Collections
-
-The application uses three main Firestore collections:
-
-1. **users**: Stores user information
-2. **items**: Stores item listings
-3. **borrowRequests**: Stores borrow requests and their status
 
 
 

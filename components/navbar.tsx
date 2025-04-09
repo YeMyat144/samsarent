@@ -26,22 +26,22 @@ export function Navbar() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {user ? (
             <>
-              <Button component={Link} href="/dashboard" color={pathname === "/dashboard" ? "primary" : "inherit"} sx={{ fontSize: "1.1rem" }}>
+              <Button component={Link} href="/dashboard" color={pathname === "/dashboard" ? "primary" : "inherit"} sx={{ fontSize: "17px" }}>
                 Browse
               </Button>
-              <Button component={Link} href="/requests" color={pathname === "/requests" ? "primary" : "inherit"} sx={{ fontSize: "1.1rem" }}>
+              <Button component={Link} href="/requests" color={pathname === "/requests" ? "primary" : "inherit"} sx={{ fontSize: "17px" }}>
                 Requests
               </Button>
-              <Button color="error" variant="outlined" size="small" onClick={logout}>
+              <Button color="error" variant="outlined" onClick={logout}>
                 Logout
               </Button>
             </>
           ) : (
             <>
-              <Button component={Link} href="/login" color={pathname === "/login" ? "primary" : "inherit"}>
+              <Button component={Link} href="/login" color={pathname === "/login" ? "primary" : "inherit"} sx={{ fontSize: "17px" }}>
                 Login
               </Button>
-              <Button component={Link} href="/signup" variant="contained" size="small">
+              <Button component={Link} href="/signup" variant="contained" size="small" sx={{ fontSize: "17px" }}>
                 Sign Up
               </Button>
             </>

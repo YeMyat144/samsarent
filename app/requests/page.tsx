@@ -192,14 +192,14 @@ export default function RequestsPage() {
 
   return (
     <Container sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={4}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={2}>
         Borrow Requests
       </Typography>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="request tabs">
-          <Tab label={`Incoming Requests (${incomingRequests.length})`} id="tab-0" />
-          <Tab label={`Your Requests (${outgoingRequests.length})`} id="tab-1" />
+          <Tab label={`Lend (${incomingRequests.length})`} id="tab-0" />
+          <Tab label={`Borrow (${outgoingRequests.length})`} id="tab-1" />
         </Tabs>
       </Box>
 
