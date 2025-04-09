@@ -16,8 +16,10 @@ export function ItemCard({ item }: ItemCardProps) {
     <Link href={`/items/${item.id}`} passHref legacyBehavior>
       <Card
         component="a"
+        color="background.light"
         sx={{
           height: "100%",
+          width: "90%",
           display: "flex",
           flexDirection: "column",
           borderRadius: 3,
@@ -36,7 +38,8 @@ export function ItemCard({ item }: ItemCardProps) {
             component="img"
             sx={{
               height: 180,
-              width: "100%",
+              width: "50%",
+              margin: "auto",
               objectFit: "cover",
             }}
             image={item.imageUrl}
@@ -66,7 +69,7 @@ export function ItemCard({ item }: ItemCardProps) {
               label={item.available ? "Available" : "Unavailable"}
               size="small"
               sx={{
-                bgcolor: item.available ? "success.light" : "grey.300",
+                bgcolor: item.available ? "secondary.main" : "grey.300",
                 color: item.available ? "success.contrastText" : "text.secondary",
               }}
             />

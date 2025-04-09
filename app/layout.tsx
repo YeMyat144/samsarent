@@ -1,9 +1,8 @@
-import type React from "react"
+// app/layout.tsx (no "use client" here)
+
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { AuthProvider } from "@/lib/auth-context"
-import { OfflineDetector } from "@/components/offline-detector"
-import { Navbar } from "@/components/navbar"
+import { Providers } from "./providers"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,18 +19,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" type="image/png" href="/logo.png" />
+        <link rel="icon" type="image/png" href="/1.png" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <Navbar />
-          {children}
-          <OfflineDetector />
-        </AuthProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
 }
-
-
-import './globals.css'

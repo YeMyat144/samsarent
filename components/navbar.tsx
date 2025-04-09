@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import AppBar from "@mui/material/AppBar"
 import Toolbar from "@mui/material/Toolbar"
-import Typography from "@mui/material/Typography"
 import Button from "@mui/material/Button"
 import Box from "@mui/material/Box"
 import { useAuth } from "@/lib/auth-context"
@@ -14,32 +13,26 @@ export function Navbar() {
   const { user, logout } = useAuth()
 
   return (
-    <AppBar color="default" sx={{ backgroundColor: "white",boxShadow: "none", borderBottom: "1px solid #e0e0e0" }}>
-      <Toolbar>
-        <Typography
-          variant="h6"
-          component={ Link }
-          href= "/"
-          sx={{
-            flexGrow: 1,
-            fontWeight: "bold",
-            color: "text.primary",
-            textDecoration: "none",
-          }}
-        >
-           Samsarental
-        </Typography>
+    <AppBar position="static" sx={{ backgroundColor: 'secondary.main', boxShadow: "none" }}>
+      <Toolbar sx={{ mt: 1, mb: 1, ml: 4, mr: 4, display: "flex", justifyContent: "space-between"  }}>
+        <Link href="/" >
+          <img
+            src="/1.png" // Path to your logo
+            alt="Samsarental Logo"
+            style={{ width: "auto", height: "65px", marginRight: "10px" }} // Adjust size as needed
+          />
+        </Link>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {user ? (
             <>
-              <Button component={Link} href="/dashboard" color={pathname === "/dashboard" ? "primary" : "inherit"}>
+              <Button component={Link} href="/dashboard" color={pathname === "/dashboard" ? "primary" : "inherit"} sx={{ fontSize: "1.1rem" }}>
                 Browse
               </Button>
-              <Button component={Link} href="/requests" color={pathname === "/requests" ? "primary" : "inherit"}>
+              <Button component={Link} href="/requests" color={pathname === "/requests" ? "primary" : "inherit"} sx={{ fontSize: "1.1rem" }}>
                 Requests
               </Button>
-              <Button variant="outlined" size="small" onClick={logout}>
+              <Button color="error" variant="outlined" size="small" onClick={logout}>
                 Logout
               </Button>
             </>

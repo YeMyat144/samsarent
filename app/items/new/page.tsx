@@ -100,7 +100,7 @@ export default function NewItemPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ mt:3, py: 8 }}>
+    <Container maxWidth="sm" sx={{ py: 4 }}>
        <Typography variant="h5" component="h1" gutterBottom>
           Add New Item
         </Typography>

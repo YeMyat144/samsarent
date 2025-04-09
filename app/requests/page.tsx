@@ -191,7 +191,7 @@ export default function RequestsPage() {
   }
 
   return (
-    <Container sx={{ mt:7, py: 4 }}>
+    <Container sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" fontWeight="bold" mb={4}>
         Borrow Requests
       </Typography>

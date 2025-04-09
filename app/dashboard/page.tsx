@@ -16,7 +16,6 @@ import { getItems } from "@/lib/firestore"
 import { ItemCard } from "@/components/item-card"
 import type { Item } from "@/types"
 
-// Category labels for display
 const categoryLabels: Record<string, string> = {
   electronics: "Electronics",
   tools: "Tools",
@@ -41,9 +40,7 @@ export default function Dashboard() {
           if (user) {
             const fetchedItems = await getItems()
             setItems(fetchedItems)
-
-            // Extract unique categories from items
-            const uniqueCategories = Array.from(new Set(fetchedItems.map((item) => item.category)))
+            const uniqueCategories = Array.from(new Set(fetchedItems.map(item => item.category)))
             setCategories(uniqueCategories)
           }
         } catch (error: any) {
@@ -61,20 +58,18 @@ export default function Dashboard() {
     setSelectedCategory(newValue)
   }
 
-  // Filter items by selected category
-  const filteredItems = selectedCategory === "all" ? items : items.filter((item) => item.category === selectedCategory)
+  const filteredItems =
+    selectedCategory === "all"
+      ? items
+      : items.filter(item => item.category === selectedCategory)
 
-  // Group items by category for "all" view
-  const itemsByCategory = items.reduce(
-    (acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = []
-      }
-      acc[item.category].push(item)
-      return acc
-    },
-    {} as Record<string, Item[]>,
-  )
+  const itemsByCategory = items.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = []
+    }
+    acc[item.category].push(item)
+    return acc
+  }, {} as Record<string, Item[]>)
 
   if (loading || isLoading) {
     return (
@@ -98,30 +93,44 @@ export default function Dashboard() {
   }
 
   return (
-    <Container sx={{ mt:7, py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
-        <Tabs
-          value={selectedCategory}
-          onChange={handleCategoryChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
+    <Container sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 } }}>
+      {/* Tabs and Button */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          justifyContent: "space-between",
+          alignItems: { xs: "flex-start", md: "center" },
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <Box sx={{ width: "100%" }}>
+          <Tabs
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
+            <Tab label="All Categories" value="all" />
+            {categories.map(category => (
+              <Tab key={category} label={categoryLabels[category] || category} value={category} />
+            ))}
+          </Tabs>
+        </Box>
+
+        <Button
+          variant="contained"
+          component={Link}
+          href="/items/new"
+          sx={{ alignSelf: { xs: "stretch", md: "center" }, mt: { xs: 2, md: 0 } }}
         >
-          <Tab label="All Categories" value="all" />
-          {categories.map((category) => (
-            <Tab key={category} label={categoryLabels[category] || category} value={category} />
-          ))}
-        </Tabs>
-      </Box>
-        <Button variant="contained" component={Link} href="/items/new">
-          Add New Item
+          Add 
         </Button>
       </Box>
 
-      {/* Category Tabs */}
-      
-
+      {/* Main Content */}
       {items.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
           <Typography variant="h6" gutterBottom>
@@ -141,7 +150,6 @@ export default function Dashboard() {
           </Button>
         </Box>
       ) : selectedCategory === "all" ? (
-        // Display items grouped by category
         <Box>
           {Object.entries(itemsByCategory).map(([category, categoryItems]) => (
             <Box key={category} sx={{ mb: 6 }}>
@@ -152,8 +160,11 @@ export default function Dashboard() {
                 <Divider sx={{ flex: 1, ml: 2 }} />
               </Box>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                {categoryItems.map((item) => (
-                  <Box key={item.id} sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" } }}>
+                {categoryItems.map(item => (
+                  <Box
+                    key={item.id}
+                    sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" }, px: 1 }}
+                  >
                     <ItemCard item={item} />
                   </Box>
                 ))}
@@ -162,10 +173,12 @@ export default function Dashboard() {
           ))}
         </Box>
       ) : (
-        // Display filtered items
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-          {filteredItems.map((item) => (
-            <Box key={item.id} sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" } }}>
+          {filteredItems.map(item => (
+            <Box
+              key={item.id}
+              sx={{ width: { xs: "100%", sm: "calc(50% - 12px)", md: "calc(33.333% - 16px)" }, px: 1 }}
+            >
               <ItemCard item={item} />
             </Box>
           ))}
