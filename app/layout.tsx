@@ -7,9 +7,8 @@ import { OfflineDetector } from "@/components/offline-detector"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Rent & Borrow Marketplace",
+  title: "Samsarental",
   description: "A simple marketplace for renting and borrowing items",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -19,6 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/png" href="/samsarental.png" />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           {children}

@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Samsarental
 
-## Getting Started
+Samsarental is a platform where users can list their items for others to borrow and request to borrow items from other users. The application handles the entire borrowing lifecycle, from listing items to approving borrow requests and managing the borrowing process.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **User Authentication**: Sign up and login functionality
+- **Item Management**: Add, view, and delete items
+- **Borrowing System**: Request to borrow items, approve/reject requests
+- **Delivery Coordination**: Lenders can specify delivery details when approving requests
+- **Notifications**: Users are notified of request status changes
+- **Responsive Design**: Works on mobile, tablet, and desktop devices
+- **Offline Detection**: Alerts users when they lose internet connection
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies Used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js, Material UI
+- **Backend**: Firebase (Authentication, Firestore)
+- **State Management**: React Context API
+- **Styling**: Material UI theming system
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+1. Clone the repository
+2. Install dependencies
+3. Create a Firebase project at [https://console.firebase.google.com/](https://console.firebase.google.com/)
+4. Enable Authentication (Email/Password) and Firestore in your Firebase project
+5. Create a `.env.local` file in the root directory with your Firebase configuration
+6. Run the development server
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Sign Up/Login**: Create an account or login to access the marketplace
+2. **Browse Items**: View items available for borrowing
+3. **Add Items**: List your own items for others to borrow
+4. **Request Items**: Send borrow requests for items you want to use
+5. **Manage Requests**: Approve or reject incoming borrow requests
+6. **Specify Delivery**: When approving, provide delivery details
+7. **View Requests**: Track the status of your incoming and outgoing requests
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/app`: Next.js app router pages
+- `/components`: Reusable UI components
+- `/lib`: Utility functions and Firebase configuration
+- `/types`: TypeScript type definitions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Firebase Collections
+
+The application uses three main Firestore collections:
+
+1. **users**: Stores user information
+2. **items**: Stores item listings
+3. **borrowRequests**: Stores borrow requests and their status
+
+
+

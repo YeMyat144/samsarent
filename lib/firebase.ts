@@ -21,6 +21,7 @@ export const auth = getAuth(app)
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app)
 
+
 // Enable offline persistence when possible (only in client-side)
 if (typeof window !== "undefined") {
   enableIndexedDbPersistence(db).catch((err) => {

@@ -18,6 +18,8 @@ export function Navbar() {
       <Toolbar>
         <Typography
           variant="h6"
+          component={ Link }
+          href= "/"
           sx={{
             flexGrow: 1,
             fontWeight: "bold",
@@ -25,7 +27,7 @@ export function Navbar() {
             textDecoration: "none",
           }}
         >
-          R&B Marketplace
+           Samsarental
         </Typography>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

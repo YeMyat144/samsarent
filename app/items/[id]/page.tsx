@@ -11,6 +11,7 @@ import Chip from "@mui/material/Chip"
 import Divider from "@mui/material/Divider"
 import CircularProgress from "@mui/material/CircularProgress"
 import Alert from "@mui/material/Alert"
+import Snackbar from "@mui/material/Snackbar"
 import { useAuth } from "@/lib/auth-context"
 import { getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
 import type { Item } from "@/types"
@@ -23,6 +24,10 @@ export default function ItemDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [requestSent, setRequestSent] = useState(false)
+  const [notification, setNotification] = useState<{ open: boolean; message: string }>({
+    open: false,
+    message: "",
+  })
   const { user } = useAuth()
   const router = useRouter()
 
@@ -61,6 +66,7 @@ export default function ItemDetailPage() {
       })
 
       setRequestSent(true)
+      showNotification("Request sent successfully! You'll be notified when the owner responds.")
     } catch (err: any) {
       setError(err.message || "Failed to send borrow request")
     }
@@ -80,6 +86,17 @@ export default function ItemDetailPage() {
     } catch (err: any) {
       setError(err.message || "Failed to delete item")
     }
+  }
+
+  const showNotification = (message: string) => {
+    setNotification({
+      open: true,
+      message,
+    })
+  }
+
+  const closeNotification = () => {
+    setNotification({ ...notification, open: false })
   }
 
   if (isLoading) {
@@ -111,73 +128,124 @@ export default function ItemDetailPage() {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Navbar />
-      <Paper elevation={3} sx={{ p: 6 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {item.title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Listed by {item.ownerName}
-            </Typography>
+        <Box sx={{mt:6, display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
+          {/* Image Section */}
+          <Box sx={{ width: { xs: "100%", md: "40%" } }}>
+            {item.imageUrl ? (
+              <img
+                src={item.imageUrl || "/placeholder.svg"}
+                alt={item.title}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  maxHeight: "300px",
+                  objectFit: "contain",
+                  borderRadius: "8px",
+                }}
+                onError={(e) => {
+                  // Replace with a placeholder if image fails to load
+                  ;(e.target as HTMLImageElement).src = "/placeholder.svg?height=300&width=400"
+                  ;(e.target as HTMLImageElement).alt = "Image not available"
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "250px",
+                  bgcolor: "grey.100",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  No image available
+                </Typography>
+              </Box>
+            )}
           </Box>
-          <Chip label={item.available ? "Available" : "Unavailable"} color={item.available ? "primary" : "default"} />
-        </Box>
 
-        <Divider sx={{ my: 3 }} />
+          {/* Details Section */}
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+              <Box>
+                <Typography variant="h4" component="h1" gutterBottom>
+                  {item.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Listed by {item.ownerName}
+                </Typography>
+              </Box>
+              <Chip
+                label={item.available ? "Available" : "Unavailable"}
+                color={item.available ? "success" : "default"}
+              />
+            </Box>
 
-        <Box sx={{ mb: 4 }}>
-          <Typography display="flex" variant="h6" gutterBottom>
-            Description(About, BorrowDays)
-          </Typography>
-          <Typography variant="body1">{item.description}</Typography>
-        </Box>
+            <Divider sx={{ my: 3 }} />
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Category
-            </Typography>
-            <Typography variant="body1" sx={{ textTransform: "capitalize" }}>
-              {item.category}
-            </Typography>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Description
+              </Typography>
+              <Typography variant="body1">{item.description}</Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Category
+                </Typography>
+                <Typography variant="body1" sx={{ textTransform: "capitalize" }}>
+                  {item.category}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Daily Price
+                </Typography>
+                <Typography variant="body1">${item.price.toFixed(2)}</Typography>
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+              <Button variant="outlined" onClick={() => router.push("/dashboard")}>
+                Back to Listings
+              </Button>
+
+              {isOwner ? (
+                <Button variant="contained" color="error" onClick={handleDeleteItem}>
+                  Delete Item
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleBorrowRequest}
+                  disabled={!item.available || requestSent || !user}
+                >
+                  {requestSent
+                    ? "Request Sent"
+                    : !user
+                      ? "Login to Borrow"
+                      : !item.available
+                        ? "Unavailable"
+                        : "Request to Borrow"}
+                </Button>
+              )}
+            </Box>
           </Box>
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Daily Price
-            </Typography>
-            <Typography variant="body1">${item.price.toFixed(2)}</Typography>
-          </Box>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
-
-        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-          <Button variant="outlined" onClick={() => router.push("/dashboard")}>
-            Back to Listings
-          </Button>
-
-          {isOwner ? (
-            <Button variant="contained" color="error" onClick={handleDeleteItem}>
-              Delete Item
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              onClick={handleBorrowRequest}
-              disabled={!item.available || requestSent || !user}
-            >
-              {requestSent
-                ? "Request Sent"
-                : !user
-                  ? "Login to Borrow"
-                  : !item.available
-                    ? "Unavailable"
-                    : "Request to Borrow"}
-            </Button>
-          )}
-        </Box>
-      </Paper>
+      {/* Notification Snackbar */}
+      <Snackbar open={notification.open} autoHideDuration={6000} onClose={closeNotification}>
+        <Alert onClose={closeNotification} severity="success" sx={{ width: "100%" }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Container>
   )
 }

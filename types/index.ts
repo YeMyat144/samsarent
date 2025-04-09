@@ -17,6 +17,7 @@ export interface Item {
   ownerName: string
   available: boolean
   createdAt: Date | Timestamp
+  imageUrl?: string
 }
 
 export interface BorrowRequest {

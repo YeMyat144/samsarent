@@ -13,7 +13,6 @@ import Alert from "@mui/material/Alert"
 import MenuItem from "@mui/material/MenuItem"
 import { useAuth } from "@/lib/auth-context"
 import { addItem } from "@/lib/firestore"
-import { Navbar } from "@/components/navbar"
 
 const categories = [
   { value: "electronics", label: "Electronics" },
@@ -29,6 +28,8 @@ export default function NewItemPage() {
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("")
   const [price, setPrice] = useState("")
+  const [imageUrl, setImageUrl] = useState("")
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const { user } = useAuth()
@@ -55,6 +56,7 @@ export default function NewItemPage() {
         ownerName: user.displayName || "Unknown",
         available: true,
         createdAt: new Date(),
+        imageUrl: imageUrl || undefined,
       })
 
       router.push("/dashboard")
@@ -65,9 +67,40 @@ export default function NewItemPage() {
     }
   }
 
+  const validateImageUrl = (url: string) => {
+    if (!url) return true
+    try {
+      new URL(url)
+      return true
+    } catch (e) {
+      return false
+    }
+  }
+
+  const togglePreview = () => {
+    if (imageUrl && validateImageUrl(imageUrl)) {
+      setIsPreviewVisible(!isPreviewVisible)
+    } else if (imageUrl) {
+      setError("Please enter a valid image URL")
+    }
+  }
+
+  // Function to convert Dropbox shared link to direct link
+  const convertDropboxUrl = () => {
+    if (!imageUrl) return
+
+    // Check if it's a Dropbox shared link
+    if (imageUrl.includes("dropbox.com/s/")) {
+      // Convert to direct link format
+      const directLink = imageUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "")
+
+      setImageUrl(directLink)
+      setIsPreviewVisible(true)
+    }
+  }
+
   return (
     <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Navbar />
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h5" component="h1" gutterBottom>
           Add New Item
@@ -137,6 +170,52 @@ export default function NewItemPage() {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
+
+          <Box sx={{ mt: 2, mb: 2 }}>
+
+            <TextField
+              fullWidth
+              id="imageUrl"
+              label="Image URL"
+              name="imageUrl"
+              placeholder="https://www.dropbox.com/s/..."
+              value={imageUrl}
+              onChange={(e) => {
+                setImageUrl(e.target.value)
+                if (isPreviewVisible && !e.target.value) {
+                  setIsPreviewVisible(false)
+                }
+              }}
+            />
+
+            <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+              
+              {imageUrl && (
+                <Button variant="outlined" size="small" onClick={togglePreview}>
+                  {isPreviewVisible ? "Hide Preview" : "Show Preview"}
+                </Button>
+              )}
+            </Box>
+
+            {isPreviewVisible && imageUrl && (
+              <Box sx={{ mt: 2, position: "relative" }}>
+                <img
+                  src={imageUrl || "/placeholder.svg"}
+                  alt="Preview"
+                  style={{
+                    width: "100%",
+                    maxHeight: "200px",
+                    objectFit: "contain",
+                    borderRadius: "8px",
+                  }}
+                  onError={() => {
+                    setError("Failed to load image. Please check the URL and try again.")
+                    setIsPreviewVisible(false)
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
 
           <Button type="submit" fullWidth variant="contained" disabled={isLoading} sx={{ mt: 3 }}>
             {isLoading ? "Adding..." : "Add Item"}
