@@ -2,7 +2,7 @@
 
 Samsarental is a platform where users can list their items for others to borrow and request to borrow items from other users. The application handles the entire borrowing lifecycle, from listing items to approving borrow requests and managing the borrowing process.
 
-![Samarental Demo](https://i.ibb.co/SD5CK4t7/demo.png)
+![Samarental Demo](https://i.ibb.co/twQrbTqP/demo.png)
 
 ## Features
 
