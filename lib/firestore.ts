@@ -35,10 +35,10 @@ export const createUser = async (userData: Omit<User, "id">) => {
 export const getUser = async (userId: string) => {
   const userRef = doc(db, "users", userId)
   const userSnap = await getDoc(userRef)
+  const data = userSnap.data() as Omit<User, "id">
 
   if (userSnap.exists()) {
-    const userData = userSnap.data()
-    return { id: userSnap.id, uid: userData.uid, email: userData.email, displayName: userData.displayName, createdAt: userData.createdAt } as User
+    return { id: userSnap.id, ...data }
   }
 
   return null
@@ -101,7 +101,7 @@ export const deleteItem = async (itemId: string) => {
 }
 
 // Borrow request operations
-export const createBorrowRequest = async (requestData: Omit<BorrowRequest, "id">) => {
+export const createBorrowRequest = async (requestData: any) => {
   const requestsRef = collection(db, "borrowRequests")
   const docRef = await addDoc(requestsRef, {
     ...requestData,
@@ -146,23 +146,29 @@ export const updateBorrowRequest = async (
   paymentRequired?: boolean,
   isSwap?: boolean,
 ) => {
-  const requestRef = doc(db, "borrowRequests", requestId)
+  try {
+    const requestRef = doc(db, "borrowRequests", requestId)
 
-  const updateData: any = { status }
+    // Create update data object with only the fields we want to update
+    const updateData: Record<string, any> = { status }
 
-  if (deliveryMessage) {
-    updateData.deliveryMessage = deliveryMessage
+    if (deliveryMessage !== undefined) {
+      updateData.deliveryMessage = deliveryMessage
+    }
+
+    if (paymentRequired !== undefined) {
+      updateData.paymentRequired = paymentRequired
+    }
+
+    // Don't include isSwap in the update if it's undefined
+    if (isSwap !== undefined) {
+      updateData.isSwap = isSwap
+    }
+
+    await updateDoc(requestRef, updateData)
+  } catch (error) {
+    return handleFirestoreError(error)
   }
-
-  if (paymentRequired !== undefined) {
-    updateData.paymentRequired = paymentRequired
-  }
-
-  if (isSwap !== undefined) {
-    updateData.isSwap = isSwap
-  }
-
-  await updateDoc(requestRef, updateData)
 }
 
 // Add a function to get user items for swap

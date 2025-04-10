@@ -2,15 +2,31 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { MenuItem, FormControlLabel, Switch, InputLabel, Select, FormControl, CircularProgress, Box, Button, Container, Typography, Snackbar, Alert, Chip, Divider } from "@mui/material"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import Typography from "@mui/material/Typography"
+import Paper from "@mui/material/Paper"
+import Container from "@mui/material/Container"
+import Chip from "@mui/material/Chip"
+import Divider from "@mui/material/Divider"
+import CircularProgress from "@mui/material/CircularProgress"
+import Alert from "@mui/material/Alert"
+import Snackbar from "@mui/material/Snackbar"
 import { useAuth } from "@/lib/auth-context"
-import { getUserItems, getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
+import { getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
 import type { Item } from "@/types"
+import MenuItem from "@mui/material/MenuItem"
+import FormControl from "@mui/material/FormControl"
+import FormControlLabel from "@mui/material/FormControlLabel"
+import InputLabel from "@mui/material/InputLabel"
+import Select from "@mui/material/Select"
+import Switch from "@mui/material/Switch"
+import { collection, query, where, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 export default function ItemDetailPage() {
   const params = useParams()
   const id = params.id as string
-  const [itemId] = params.id as string[]
   const [item, setItem] = useState<Item | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -46,11 +62,29 @@ export default function ItemDetailPage() {
     }
   }, [params.id])
 
+  const fetchUserItems = async (userId: string) => {
+    try {
+      const itemsRef = collection(db, "items")
+      const q = query(itemsRef, where("ownerId", "==", userId), where("available", "==", true))
+      const querySnapshot = await getDocs(q)
+
+      const items: Item[] = []
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as Item)
+      })
+
+      return items
+    } catch (error) {
+      console.error("Error fetching user items:", error)
+      return []
+    }
+  }
+
   useEffect(() => {
-    const fetchUserItems = async () => {
+    const fetchUserItemsData = async () => {
       if (user) {
         try {
-          const items = await getUserItems(user.uid)
+          const items = await fetchUserItems(user.uid)
           setUserItems(items)
         } catch (error) {
           console.error("Error fetching user items:", error)
@@ -58,14 +92,15 @@ export default function ItemDetailPage() {
       }
     }
 
-    fetchUserItems()
+    fetchUserItemsData()
   }, [user])
 
   const handleBorrowRequest = async () => {
     if (!user || !item) return
 
     try {
-      await createBorrowRequest({
+      // Create the base request object
+      const requestData: any = {
         itemId: item.id,
         itemTitle: item.title,
         borrowerId: user.uid,
@@ -74,11 +109,18 @@ export default function ItemDetailPage() {
         ownerName: item.ownerName,
         status: "pending",
         createdAt: new Date(),
-        isSwap: isSwapMode,
-        swapItemId: isSwapMode ? swapItemId : undefined,
-        swapItemTitle: isSwapMode ? userItems.find((item) => item.id === swapItemId)?.title : undefined,
-        swapDuration: isSwapMode ? swapDuration : undefined,
-      })
+      }
+
+      // Add swap-related fields only if in swap mode
+      if (isSwapMode && swapItemId) {
+        const swapItem = userItems.find((item) => item.id === swapItemId)
+        requestData.isSwap = true
+        requestData.swapItemId = swapItemId
+        requestData.swapItemTitle = swapItem ? swapItem.title : "Unknown Item"
+        requestData.swapDuration = swapDuration
+      }
+
+      await createBorrowRequest(requestData)
 
       setRequestSent(true)
       showNotification(
@@ -144,7 +186,7 @@ export default function ItemDetailPage() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
           {/* Image Section */}
           <Box sx={{ width: { xs: "100%", md: "40%" } }}>
             {item.imageUrl ? (
@@ -229,99 +271,92 @@ export default function ItemDetailPage() {
             <Divider sx={{ my: 3 }} />
 
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3, gap: 2 }}>
-  {/* Left side - Back button */}
-  <Box sx={{ flex: 1, display: "flex", alignItems: "flex-start" }}>
-    <Button variant="outlined" onClick={() => router.push("/dashboard")}>
-      Back
-    </Button>
-  </Box>
+              <Box sx={{ flex: 1, display: "flex", alignItems: "flex-start" }}>
+              <Button variant="outlined" onClick={() => router.push("/dashboard")}>
+                Back
+              </Button>
+              </Box>
 
-  {/* Right side - Delete or Borrow/Swap controls */}
-  <Box sx={{ flex: 1 }}>
-    {isOwner ? (
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button variant="contained" color="error" onClick={handleDeleteItem}>
-          Delete Item
-        </Button>
-      </Box>
-    ) : (
-      <Box>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={isSwapMode}
-              onChange={(e) => setIsSwapMode(e.target.checked)}
-              color="primary"
-            />
-          }
-          label="Swap instead of borrow"
-        />
+              <Box sx={{ flex: 1 }}>
+              {isOwner ? (
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <Button variant="contained" color="error" onClick={handleDeleteItem}>
+                  Delete Item
+                </Button>
+                </Box>
+              ) : (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Switch checked={isSwapMode} onChange={(e) => setIsSwapMode(e.target.checked)} color="primary" />
+                    }
+                    label="Swap instead of borrow"
+                  />
 
-        {isSwapMode && (
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel id="swap-item-label">Item to Swap</InputLabel>
-              <Select
-                sx={{ borderRadius: "40px" }}
-                labelId="swap-item-label"
-                value={swapItemId}
-                label="Item to Swap"
-                onChange={(e) => setSwapItemId(e.target.value)}
-                required
-              >
-                {userItems.length === 0 ? (
-                  <MenuItem disabled value="">
-                    You don't have any items to swap
-                  </MenuItem>
-                ) : (
-                  userItems.map((item) => (
-                    <MenuItem key={item.id} value={item.id}>
-                      {item.title}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </FormControl>
+                  {isSwapMode && (
+                    <Box sx={{ mt: 2, mb: 2 }}>
+                      <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel id="swap-item-label">Item to Swap</InputLabel>
+                        <Select
+                          labelId="swap-item-label"
+                          value={swapItemId}
+                          label="Item to Swap"
+                          onChange={(e) => setSwapItemId(e.target.value)}
+                          required
+                        >
+                          {userItems.length === 0 ? (
+                            <MenuItem disabled value="">
+                              You don't have any items to swap
+                            </MenuItem>
+                          ) : (
+                            userItems.map((item) => (
+                              <MenuItem key={item.id} value={item.id}>
+                                {item.title}
+                              </MenuItem>
+                            ))
+                          )}
+                        </Select>
+                      </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel id="swap-duration-label">Swap Duration (days)</InputLabel>
-              <Select
-                sx={{ borderRadius: "40px" }}
-                labelId="swap-duration-label"
-                value={swapDuration}
-                label="Swap Duration (days)"
-                onChange={(e) => setSwapDuration(Number(e.target.value))}
-              >
-                <MenuItem value={3}>3 days</MenuItem>
-                <MenuItem value={7}>1 week</MenuItem>
-                <MenuItem value={14}>2 weeks</MenuItem>
-                <MenuItem value={30}>1 month</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        )}
+                      <FormControl fullWidth>
+                        <InputLabel id="swap-duration-label">Swap Duration (days)</InputLabel>
+                        <Select
+                          labelId="swap-duration-label"
+                          value={swapDuration}
+                          label="Swap Duration (days)"
+                          onChange={(e) => setSwapDuration(Number(e.target.value))}
+                        >
+                          <MenuItem value={3}>3 days</MenuItem>
+                          <MenuItem value={7}>1 week</MenuItem>
+                          <MenuItem value={14}>2 weeks</MenuItem>
+                          <MenuItem value={30}>1 month</MenuItem>
+                        </Select>
+                      </FormControl>
+                      
+                    </Box>
+                  )}
 
-        <Button
-          variant="contained"
-          onClick={handleBorrowRequest}
-          disabled={!item.available || requestSent || !user || (isSwapMode && !swapItemId)}
-          fullWidth
-        >
-          {requestSent
-            ? "Request Sent"
-            : !user
-              ? "Login to Borrow"
-              : !item.available
-                ? "Unavailable"
-                : isSwapMode
-                  ? "Request to Swap"
-                  : "Request to Borrow"}
-        </Button>
-      </Box>
-    )}
-  </Box>
-</Box>
-
+                  <Button
+                    variant="contained"
+                    onClick={handleBorrowRequest}
+                    disabled={!item.available || requestSent || !user || (isSwapMode && !swapItemId)}
+                    fullWidth
+                  >
+                    {requestSent
+                      ? "Request Sent"
+                      : !user
+                        ? "Login to Borrow"
+                        : !item.available
+                          ? "Unavailable"
+                          : isSwapMode
+                            ? "Request to Swap"
+                            : "Request to Borrow"}
+                  </Button>
+                  
+                </Box>
+              )}
+              </Box>
+            </Box>
           </Box>
         </Box>
 

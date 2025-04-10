@@ -121,32 +121,29 @@ export default function RequestsPage() {
         additionalInfo ? `\n\nAdditional information: ${additionalInfo}` : ""
       }`
 
-      // Update the request with delivery information
-      await updateBorrowRequest(
-        approvalDialog.request.id,
-        "approved",
-        deliveryMessage,
-        approvalDialog.request.isSwap ? false : paymentRequired,
-        approvalDialog.request.isSwap,
-      )
+      const request = approvalDialog.request
+      const isSwapRequest = request.isSwap === true
 
-      // Update item availability
-      await updateItemAvailability(approvalDialog.request.itemId, false)
+      // Update the request with delivery information
+      await updateBorrowRequest(request.id, "approved", deliveryMessage, isSwapRequest ? false : paymentRequired)
+
+      // Update item availability - make the requested item unavailable
+      await updateItemAvailability(request.itemId, false)
 
       // If it's a swap, also update the swap item's availability
-      if (approvalDialog.request.isSwap && approvalDialog.request.swapItemId) {
-        await updateItemAvailability(approvalDialog.request.swapItemId, false)
+      if (isSwapRequest && request.swapItemId) {
+        await updateItemAvailability(request.swapItemId, false)
       }
 
       // Update local state
       setIncomingRequests((prev) =>
         prev.map((req) =>
-          req.id === approvalDialog.request?.id
+          req.id === request.id
             ? {
                 ...req,
                 status: "approved",
                 deliveryMessage,
-                paymentRequired: approvalDialog.request.isSwap ? false : paymentRequired,
+                paymentRequired: isSwapRequest ? false : paymentRequired,
               }
             : req,
         ),
@@ -160,7 +157,7 @@ export default function RequestsPage() {
       setPaymentRequired(false)
 
       showNotification(
-        approvalDialog.request.isSwap
+        isSwapRequest
           ? "Swap request approved successfully! The other user has been notified."
           : "Request approved successfully! The borrower has been notified.",
         "success",
@@ -219,8 +216,8 @@ export default function RequestsPage() {
 
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="request tabs">
-          <Tab label={`Lend (${incomingRequests.length})`} id="tab-0" />
-          <Tab label={`Borrow (${outgoingRequests.length})`} id="tab-1" />
+          <Tab label={`Incoming Requests (${incomingRequests.length})`} id="tab-0" />
+          <Tab label={`Your Requests (${outgoingRequests.length})`} id="tab-1" />
         </Tabs>
       </Box>
 
