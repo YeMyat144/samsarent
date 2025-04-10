@@ -32,4 +32,8 @@ export interface BorrowRequest {
   createdAt: Date | Timestamp
   deliveryMessage?: string
   paymentRequired?: boolean
+  isSwap?: boolean
+  swapItemId?: string
+  swapItemTitle?: string
+  swapDuration?: number
 }

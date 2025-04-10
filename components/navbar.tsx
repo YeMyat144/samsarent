@@ -2,10 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import AppBar from "@mui/material/AppBar"
-import Toolbar from "@mui/material/Toolbar"
-import Button from "@mui/material/Button"
-import Box from "@mui/material/Box"
+import { AppBar, Toolbar, Button, Box } from "@mui/material"
 import { useAuth } from "@/lib/auth-context"
 
 export function Navbar() {

@@ -122,16 +122,32 @@ export default function RequestsPage() {
       }`
 
       // Update the request with delivery information
-      await updateBorrowRequest(approvalDialog.request.id, "approved", deliveryMessage, paymentRequired)
+      await updateBorrowRequest(
+        approvalDialog.request.id,
+        "approved",
+        deliveryMessage,
+        approvalDialog.request.isSwap ? false : paymentRequired,
+        approvalDialog.request.isSwap,
+      )
 
       // Update item availability
       await updateItemAvailability(approvalDialog.request.itemId, false)
+
+      // If it's a swap, also update the swap item's availability
+      if (approvalDialog.request.isSwap && approvalDialog.request.swapItemId) {
+        await updateItemAvailability(approvalDialog.request.swapItemId, false)
+      }
 
       // Update local state
       setIncomingRequests((prev) =>
         prev.map((req) =>
           req.id === approvalDialog.request?.id
-            ? { ...req, status: "approved", deliveryMessage, paymentRequired }
+            ? {
+                ...req,
+                status: "approved",
+                deliveryMessage,
+                paymentRequired: approvalDialog.request.isSwap ? false : paymentRequired,
+              }
             : req,
         ),
       )
@@ -143,7 +159,12 @@ export default function RequestsPage() {
       setAdditionalInfo("")
       setPaymentRequired(false)
 
-      showNotification("Request approved successfully! The borrower has been notified.", "success")
+      showNotification(
+        approvalDialog.request.isSwap
+          ? "Swap request approved successfully! The other user has been notified."
+          : "Request approved successfully! The borrower has been notified.",
+        "success",
+      )
     } catch (error: any) {
       console.error("Error approving request:", error)
       showNotification(error.message || "Failed to approve request", "error")
@@ -192,7 +213,7 @@ export default function RequestsPage() {
 
   return (
     <Container sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={2}>
+      <Typography variant="h4" component="h1" fontWeight="bold" mb={4}>
         Borrow Requests
       </Typography>
 
@@ -212,10 +233,10 @@ export default function RequestsPage() {
               <Paper key={request.id} elevation={2} sx={{ p: 3 }}>
                 <Typography variant="h6">{request.itemTitle}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Request from {request.borrowerName} • {new Date((request.createdAt as any)?.toMillis?.() || request.createdAt).toLocaleDateString()}
+                  Request from {request.borrowerName} • {request.createdAt instanceof Date ? request.createdAt.toLocaleDateString() : new Date(request.createdAt.toMillis()).toLocaleDateString()}
                 </Typography>
 
-                <Box sx={{ my: 2 }}>
+                <Box sx={{ my: 2, display: "flex", gap: 1, alignItems: "center" }}>
                   <Chip
                     label={request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                     color={
@@ -223,7 +244,20 @@ export default function RequestsPage() {
                     }
                     size="small"
                   />
+                  {request.isSwap && <Chip label="Swap Request" color="secondary" size="small" />}
                 </Box>
+
+                {request.isSwap && (
+                  <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: "rgba(241, 196, 15, 0.1)", borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Swap Details:
+                    </Typography>
+                    <Typography variant="body2">
+                      {request.borrowerName} wants to swap their <strong>{request.swapItemTitle}</strong> with your{" "}
+                      <strong>{request.itemTitle}</strong> for <strong>{request.swapDuration} days</strong>.
+                    </Typography>
+                  </Box>
+                )}
 
                 {request.status === "approved" && request.deliveryMessage && (
                   <Box sx={{ mt: 2, mb: 3, p: 2, bgcolor: "rgba(25, 118, 210, 0.08)", borderRadius: 1 }}>
@@ -233,7 +267,7 @@ export default function RequestsPage() {
                     <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
                       {request.deliveryMessage}
                     </Typography>
-                    {request.paymentRequired && (
+                    {request.paymentRequired && !request.isSwap && (
                       <Typography variant="body2" sx={{ mt: 1, fontWeight: "medium" }}>
                         Payment will be required upon delivery.
                       </Typography>
@@ -266,10 +300,10 @@ export default function RequestsPage() {
               <Paper key={request.id} elevation={2} sx={{ p: 3 }}>
                 <Typography variant="h6">{request.itemTitle}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Owner: {request.ownerName} • {new Date((request.createdAt as any)?.toMillis?.() || request.createdAt).toLocaleDateString()}
+                  Owner: {request.ownerName} • {request.createdAt instanceof Date ? request.createdAt.toLocaleDateString() : new Date(request.createdAt.toMillis()).toLocaleDateString()}
                 </Typography>
 
-                <Box sx={{ my: 2 }}>
+                <Box sx={{ my: 2, display: "flex", gap: 1, alignItems: "center" }}>
                   <Chip
                     label={request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                     color={
@@ -277,7 +311,20 @@ export default function RequestsPage() {
                     }
                     size="small"
                   />
+                  {request.isSwap && <Chip label="Swap Request" color="secondary" size="small" />}
                 </Box>
+
+                {request.isSwap && (
+                  <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: "rgba(241, 196, 15, 0.1)", borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Swap Details:
+                    </Typography>
+                    <Typography variant="body2">
+                      You offered to swap your <strong>{request.swapItemTitle}</strong> with {request.ownerName}'s{" "}
+                      <strong>{request.itemTitle}</strong> for <strong>{request.swapDuration} days</strong>.
+                    </Typography>
+                  </Box>
+                )}
 
                 {request.status === "approved" && request.deliveryMessage && (
                   <Box sx={{ mt: 2, p: 2, bgcolor: "rgba(25, 118, 210, 0.08)", borderRadius: 1 }}>
@@ -287,7 +334,7 @@ export default function RequestsPage() {
                     <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
                       {request.deliveryMessage}
                     </Typography>
-                    {request.paymentRequired && (
+                    {request.paymentRequired && !request.isSwap && (
                       <Typography variant="body2" sx={{ mt: 1, fontWeight: "medium" }}>
                         Payment will be required upon delivery.
                       </Typography>
@@ -305,8 +352,9 @@ export default function RequestsPage() {
         <DialogTitle>Approve Request</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 3 }}>
-            Please provide delivery information for {approvalDialog.request?.borrowerName}. This will be sent as a
-            notification when you approve the request.
+            {approvalDialog.request?.isSwap
+              ? `Please provide delivery information for the swap with ${approvalDialog.request?.borrowerName}. This will be sent as a notification when you approve the request.`
+              : `Please provide delivery information for ${approvalDialog.request?.borrowerName}. This will be sent as a notification when you approve the request.`}
           </DialogContentText>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -361,17 +409,19 @@ export default function RequestsPage() {
             </Paper>
           </Box>
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={paymentRequired}
-                onChange={(e) => setPaymentRequired(e.target.checked)}
-                name="paymentRequired"
-              />
-            }
-            label="Payment required upon delivery"
-            sx={{ mt: 2 }}
-          />
+          {!approvalDialog.request?.isSwap && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={paymentRequired}
+                  onChange={(e) => setPaymentRequired(e.target.checked)}
+                  name="paymentRequired"
+                />
+              }
+              label="Payment required upon delivery"
+              sx={{ mt: 2 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={closeApprovalDialog}>Cancel</Button>

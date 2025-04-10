@@ -37,12 +37,12 @@ export const getUser = async (userId: string) => {
   const userSnap = await getDoc(userRef)
 
   if (userSnap.exists()) {
-    return { id: userSnap.id, ...userSnap.data() } as unknown as User
+    const userData = userSnap.data()
+    return { id: userSnap.id, uid: userData.uid, email: userData.email, displayName: userData.displayName, createdAt: userData.createdAt } as User
   }
 
   return null
 }
-
 
 // Item operations
 export const addItem = async (itemData: Omit<Item, "id">) => {
@@ -138,11 +138,13 @@ export const getBorrowRequests = async (userId: string) => {
   }
 }
 
+// Update the updateBorrowRequest function to handle swap information
 export const updateBorrowRequest = async (
   requestId: string,
   status: "approved" | "rejected",
   deliveryMessage?: string,
   paymentRequired?: boolean,
+  isSwap?: boolean,
 ) => {
   const requestRef = doc(db, "borrowRequests", requestId)
 
@@ -156,5 +158,27 @@ export const updateBorrowRequest = async (
     updateData.paymentRequired = paymentRequired
   }
 
+  if (isSwap !== undefined) {
+    updateData.isSwap = isSwap
+  }
+
   await updateDoc(requestRef, updateData)
+}
+
+// Add a function to get user items for swap
+export const getUserItems = async (userId: string) => {
+  try {
+    const itemsRef = collection(db, "items")
+    const q = query(itemsRef, where("ownerId", "==", userId), where("available", "==", true))
+    const querySnapshot = await getDocs(q)
+
+    const items: Item[] = []
+    querySnapshot.forEach((doc) => {
+      items.push({ id: doc.id, ...doc.data() } as Item)
+    })
+
+    return items
+  } catch (error) {
+    return handleFirestoreError(error)
+  }
 }

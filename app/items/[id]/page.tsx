@@ -2,24 +2,15 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
-import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
-import Typography from "@mui/material/Typography"
-import Paper from "@mui/material/Paper"
-import Container from "@mui/material/Container"
-import Chip from "@mui/material/Chip"
-import Divider from "@mui/material/Divider"
-import CircularProgress from "@mui/material/CircularProgress"
-import Alert from "@mui/material/Alert"
-import Snackbar from "@mui/material/Snackbar"
+import { MenuItem, FormControlLabel, Switch, InputLabel, Select, FormControl, CircularProgress, Box, Button, Container, Typography, Snackbar, Alert, Chip, Divider } from "@mui/material"
 import { useAuth } from "@/lib/auth-context"
-import { getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
+import { getUserItems, getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
 import type { Item } from "@/types"
-import { Navbar } from "@/components/navbar"
 
 export default function ItemDetailPage() {
   const params = useParams()
   const id = params.id as string
+  const [itemId] = params.id as string[]
   const [item, setItem] = useState<Item | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -30,6 +21,11 @@ export default function ItemDetailPage() {
   })
   const { user } = useAuth()
   const router = useRouter()
+
+  const [isSwapMode, setIsSwapMode] = useState(false)
+  const [swapItemId, setSwapItemId] = useState("")
+  const [swapDuration, setSwapDuration] = useState(7)
+  const [userItems, setUserItems] = useState<Item[]>([])
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -50,6 +46,21 @@ export default function ItemDetailPage() {
     }
   }, [params.id])
 
+  useEffect(() => {
+    const fetchUserItems = async () => {
+      if (user) {
+        try {
+          const items = await getUserItems(user.uid)
+          setUserItems(items)
+        } catch (error) {
+          console.error("Error fetching user items:", error)
+        }
+      }
+    }
+
+    fetchUserItems()
+  }, [user])
+
   const handleBorrowRequest = async () => {
     if (!user || !item) return
 
@@ -63,12 +74,18 @@ export default function ItemDetailPage() {
         ownerName: item.ownerName,
         status: "pending",
         createdAt: new Date(),
+        isSwap: isSwapMode,
+        swapItemId: isSwapMode ? swapItemId : undefined,
+        swapItemTitle: isSwapMode ? userItems.find((item) => item.id === swapItemId)?.title : undefined,
+        swapDuration: isSwapMode ? swapDuration : undefined,
       })
 
       setRequestSent(true)
-      showNotification("Request sent successfully! You'll be notified when the owner responds.")
+      showNotification(
+        `${isSwapMode ? "Swap" : "Borrow"} request sent successfully! You'll be notified when the owner responds.`,
+      )
     } catch (err: any) {
-      setError(err.message || "Failed to send borrow request")
+      setError(err.message || "Failed to send request")
     }
   }
 
@@ -127,7 +144,7 @@ export default function ItemDetailPage() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-        <Box sx={{mt:6, display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
           {/* Image Section */}
           <Box sx={{ width: { xs: "100%", md: "40%" } }}>
             {item.imageUrl ? (
@@ -179,7 +196,7 @@ export default function ItemDetailPage() {
               </Box>
               <Chip
                 label={item.available ? "Available" : "Unavailable"}
-                color={item.available ? "secondary" : "default"}
+                color={item.available ? "primary" : "default"}
               />
             </Box>
 
@@ -211,31 +228,100 @@ export default function ItemDetailPage() {
 
             <Divider sx={{ my: 3 }} />
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-              <Button variant="outlined" onClick={() => router.push("/dashboard")}>
-                Back to Listings
-              </Button>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3, gap: 2 }}>
+  {/* Left side - Back button */}
+  <Box sx={{ flex: 1, display: "flex", alignItems: "flex-start" }}>
+    <Button variant="outlined" onClick={() => router.push("/dashboard")}>
+      Back
+    </Button>
+  </Box>
 
-              {isOwner ? (
-                <Button variant="contained" color="info" onClick={handleDeleteItem}>
-                  Delete Item
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleBorrowRequest}
-                  disabled={!item.available || requestSent || !user}
-                >
-                  {requestSent
-                    ? "Request Sent"
-                    : !user
-                      ? "Login to Borrow"
-                      : !item.available
-                        ? "Unavailable"
-                        : "Request to Borrow"}
-                </Button>
-              )}
-            </Box>
+  {/* Right side - Delete or Borrow/Swap controls */}
+  <Box sx={{ flex: 1 }}>
+    {isOwner ? (
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Button variant="contained" color="error" onClick={handleDeleteItem}>
+          Delete Item
+        </Button>
+      </Box>
+    ) : (
+      <Box>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={isSwapMode}
+              onChange={(e) => setIsSwapMode(e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Swap instead of borrow"
+        />
+
+        {isSwapMode && (
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="swap-item-label">Item to Swap</InputLabel>
+              <Select
+                sx={{ borderRadius: "40px" }}
+                labelId="swap-item-label"
+                value={swapItemId}
+                label="Item to Swap"
+                onChange={(e) => setSwapItemId(e.target.value)}
+                required
+              >
+                {userItems.length === 0 ? (
+                  <MenuItem disabled value="">
+                    You don't have any items to swap
+                  </MenuItem>
+                ) : (
+                  userItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.title}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel id="swap-duration-label">Swap Duration (days)</InputLabel>
+              <Select
+                sx={{ borderRadius: "40px" }}
+                labelId="swap-duration-label"
+                value={swapDuration}
+                label="Swap Duration (days)"
+                onChange={(e) => setSwapDuration(Number(e.target.value))}
+              >
+                <MenuItem value={3}>3 days</MenuItem>
+                <MenuItem value={7}>1 week</MenuItem>
+                <MenuItem value={14}>2 weeks</MenuItem>
+                <MenuItem value={30}>1 month</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        )}
+
+        <Button
+          variant="contained"
+          onClick={handleBorrowRequest}
+          disabled={!item.available || requestSent || !user || (isSwapMode && !swapItemId)}
+          fullWidth
+        >
+          {requestSent
+            ? "Request Sent"
+            : !user
+              ? "Login to Borrow"
+              : !item.available
+                ? "Unavailable"
+                : isSwapMode
+                  ? "Request to Swap"
+                  : "Request to Borrow"}
+        </Button>
+      </Box>
+    )}
+  </Box>
+</Box>
+
           </Box>
         </Box>
 
