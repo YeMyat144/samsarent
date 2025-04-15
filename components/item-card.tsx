@@ -33,7 +33,7 @@ export function ItemCard({ item }: ItemCardProps) {
           },
         }}
       >
-        {item.imageUrl ? (
+        {item.imageUrls ? (
           <CardMedia
             component="img"
             sx={{
@@ -42,7 +42,7 @@ export function ItemCard({ item }: ItemCardProps) {
               margin: "auto",
               objectFit: "cover",
             }}
-            image={item.imageUrl}
+            image={item.imageUrls[0] || ""}
             alt={item.title}
           />
         ) : (

@@ -10,14 +10,14 @@ export interface User {
 export interface Item {
   id: string
   title: string
-  description: string
+  description: string  // Now contains Markdown-formatted text including ![alt](url) if image was uploaded
   category: string
   price: number
   ownerId: string
   ownerName: string
   available: boolean
   createdAt: Date | Timestamp
-  imageUrl?: string
+  imageUrls: string[] 
 }
 
 export interface BorrowRequest {

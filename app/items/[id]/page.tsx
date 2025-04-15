@@ -202,9 +202,9 @@ export default function ItemDetailPage() {
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
           {/* Image Section */}
           <Box sx={{ width: { xs: "100%", md: "40%" } }}>
-            {item.imageUrl ? (
+            {item.imageUrls ? (
               <img
-                src={item.imageUrl || "/placeholder.svg"}
+                src={(Array.isArray(item.imageUrls) && item.imageUrls.length > 0 ? item.imageUrls[0] : "/placeholder.svg")}
                 alt={item.title}
                 style={{
                   width: "100%",

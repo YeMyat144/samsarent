@@ -1,18 +1,12 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
-import TextField from "@mui/material/TextField"
-import Typography from "@mui/material/Typography"
-import Paper from "@mui/material/Paper"
-import Container from "@mui/material/Container"
-import Alert from "@mui/material/Alert"
-import MenuItem from "@mui/material/MenuItem"
+import { Container, TextField, Button, Typography, Alert, Box, MenuItem } from "@mui/material"
 import { useAuth } from "@/lib/auth-context"
 import { addItem } from "@/lib/firestore"
+import { v4 as uuidv4 } from "uuid"
+import axios from "axios"
 
 const categories = [
   { value: "electronics", label: "Electronics" },
@@ -23,17 +17,72 @@ const categories = [
   { value: "other", label: "Other" },
 ]
 
+const IMGBB_API_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY || "your-default-key"
+
 export default function NewItemPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("")
   const [price, setPrice] = useState("")
-  const [imageUrl, setImageUrl] = useState("")
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
   const router = useRouter()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0]
+      
+      // Validate file type
+      if (!selectedFile.type.match('image.*')) {
+        setError("Please select an image file (JPEG, PNG, etc.)")
+        return
+      }
+      
+      // Validate file size (e.g., 5MB max)
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        setError("File size too large (max 5MB)")
+        return
+      }
+      
+      setFile(selectedFile)
+      setError("")
+      
+      // Create preview URL
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setPreviewUrl(event.target.result as string)
+        }
+      }
+      reader.readAsDataURL(selectedFile)
+    }
+  }
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append("image", file)
+    
+    try {
+      const response = await axios.post(
+        `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      )
+      
+      return response.data.data.url
+    } catch (err) {
+      console.error("Image upload failed:", err)
+      throw new Error("Failed to upload image. Please try again.")
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,16 +96,22 @@ export default function NewItemPage() {
     setError("")
 
     try {
+      let imageUrl = ""
+
+      if (file) {
+        imageUrl = await uploadImage(file)
+      }
+
       await addItem({
         title,
-        description,
+        description: description,
         category,
         price: Number.parseFloat(price),
         ownerId: user.uid,
         ownerName: user.displayName || "Unknown",
         available: true,
         createdAt: new Date(),
-        imageUrl: imageUrl || undefined,
+        imageUrls: imageUrl ? [imageUrl] : [],
       })
 
       router.push("/dashboard")
@@ -67,159 +122,117 @@ export default function NewItemPage() {
     }
   }
 
-  const validateImageUrl = (url: string) => {
-    if (!url) return true
-    try {
-      new URL(url)
-      return true
-    } catch (e) {
-      return false
-    }
-  }
-
-  const togglePreview = () => {
-    if (imageUrl && validateImageUrl(imageUrl)) {
-      setIsPreviewVisible(!isPreviewVisible)
-    } else if (imageUrl) {
-      setError("Please enter a valid image URL")
-    }
-  }
-
-  // Function to convert Dropbox shared link to direct link
-  const convertDropboxUrl = () => {
-    if (!imageUrl) return
-
-    // Check if it's a Dropbox shared link
-    if (imageUrl.includes("dropbox.com/s/")) {
-      // Convert to direct link format
-      const directLink = imageUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "")
-
-      setImageUrl(directLink)
-      setIsPreviewVisible(true)
-    }
-  }
-
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
-       <Typography variant="h5" component="h1" gutterBottom>
-          Add New Item
-        </Typography>
-        <Typography variant="body2" color="text.secondary" mb={3}>
-          List an item for others to rent or borrow
-        </Typography>
+      <Typography variant="h5" component="h1" gutterBottom>
+        Add New Item
+      </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} noValidate>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+      <Box component="form" onSubmit={handleSubmit} noValidate>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="title"
-            label="Title"
-            name="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+        <TextField
+          margin="normal"
+          required
+          fullWidth
+          id="title"
+          label="Title"
+          name="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <TextField
+          margin="normal"
+          required
+          fullWidth
+          multiline
+          rows={4}
+          id="description"
+          label="Description"
+          name="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        <TextField
+          select
+          margin="normal"
+          required
+          fullWidth
+          id="category"
+          label="Category"
+          name="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          {categories.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          margin="normal"
+          required
+          fullWidth
+          id="price"
+          label="Daily Price ($)"
+          name="price"
+          type="number"
+          inputProps={{ min: 0, step: 0.01 }}
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
+
+        <Box sx={{ mt: 2, mb: 2 }}>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+            style={{ display: 'none' }}
           />
-
-          <TextField
-            margin="normal"
-            required
+          
+          <Button
+            variant="outlined"
+            onClick={() => fileInputRef.current?.click()}
             fullWidth
-            multiline
-            rows={4}
-            id="description"
-            label="Description"
-            name="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <TextField
-            select
-            margin="normal"
-            required
-            fullWidth
-            id="category"
-            label="Category"
-            name="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
           >
-            {categories.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="price"
-            label="Daily Price ($)"
-            name="price"
-            type="number"
-            inputProps={{ min: 0, step: 0.01 }}
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-
-          <Box sx={{ mt: 2, mb: 2 }}>
-
-            <TextField
-              fullWidth
-              id="imageUrl"
-              label="Image URL"
-              name="imageUrl"
-              placeholder="https://www.dropbox.com/s/..."
-              value={imageUrl}
-              onChange={(e) => {
-                setImageUrl(e.target.value)
-                if (isPreviewVisible && !e.target.value) {
-                  setIsPreviewVisible(false)
-                }
-              }}
-            />
-
-            <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-              
-              {imageUrl && (
-                <Button variant="outlined" size="small" onClick={togglePreview}>
-                  {isPreviewVisible ? "Hide Preview" : "Show Preview"}
-                </Button>
-              )}
-            </Box>
-
-            {isPreviewVisible && imageUrl && (
-              <Box sx={{ mt: 2, position: "relative" }}>
-                <img
-                  src={imageUrl || "/placeholder.svg"}
-                  alt="Preview"
-                  style={{
-                    width: "100%",
-                    maxHeight: "200px",
-                    objectFit: "contain",
-                    borderRadius: "8px",
-                  }}
-                  onError={() => {
-                    setError("Failed to load image. Please check the URL and try again.")
-                    setIsPreviewVisible(false)
-                  }}
-                />
-              </Box>
-            )}
-          </Box>
-
-          <Button type="submit" fullWidth variant="contained" disabled={isLoading} sx={{ mt: 3 }}>
-            {isLoading ? "Adding..." : "Add Item"}
+            Upload Image
           </Button>
+          
+          {file && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Selected: {file.name}
+            </Typography>
+          )}
+          
+          {previewUrl && (
+            <Box sx={{ mt: 2 }}>
+              <img
+                src={previewUrl}
+                alt="Preview"
+                style={{
+                  width: "100%",
+                  maxHeight: "200px",
+                  objectFit: "contain",
+                  borderRadius: "8px",
+                }}
+              />
+            </Box>
+          )}
         </Box>
+
+        <Button type="submit" fullWidth variant="contained" disabled={isLoading} sx={{ mt: 3 }}>
+          {isLoading ? "Adding..." : "Add Item"}
+        </Button>
+      </Box>
     </Container>
   )
 }
