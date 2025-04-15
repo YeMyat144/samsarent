@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Box, Container, Paper, Typography, TextField, IconButton, CircularProgress, Alert } from "@mui/material"
+import { Box, Container, Paper, Typography, TextField, IconButton, CircularProgress, Alert, Button } from "@mui/material"
 import { useSearchParams } from "next/navigation"
 import SendIcon from "@mui/icons-material/Send"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
@@ -74,10 +74,6 @@ export default function ChatPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={3}>
-        Messages
-      </Typography>
-
       <Paper
         elevation={3}
         sx={{

@@ -39,10 +39,7 @@ import {
         }
       })
   
-      if (existingConversation) {
-        return existingConversation.id
-      }
-  
+      
       // Create a new conversation
       const participantNames: Record<string, string> = {}
       participantNames[userId1] = userName1
