@@ -3,28 +3,21 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
-import Typography from "@mui/material/Typography"
-import Container from "@mui/material/Container"
-import Paper from "@mui/material/Paper"
-import Tabs from "@mui/material/Tabs"
-import Tab from "@mui/material/Tab"
-import Chip from "@mui/material/Chip"
-import CircularProgress from "@mui/material/CircularProgress"
-import TextField from "@mui/material/TextField"
+import { Box, Button, Container, CircularProgress, Typography, Paper, Tabs, Tab, Chip, Snackbar, Alert  } from "@mui/material"
 import Dialog from "@mui/material/Dialog"
-import DialogActions from "@mui/material/DialogActions"
-import DialogContent from "@mui/material/DialogContent"
-import DialogContentText from "@mui/material/DialogContentText"
 import DialogTitle from "@mui/material/DialogTitle"
+import DialogContent from "@mui/material/DialogContent"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContentText from "@mui/material/DialogContentText"
+import TextField from "@mui/material/TextField"
 import FormControlLabel from "@mui/material/FormControlLabel"
 import Checkbox from "@mui/material/Checkbox"
-import Snackbar from "@mui/material/Snackbar"
-import Alert from "@mui/material/Alert"
 import { useAuth } from "@/lib/auth-context"
 import { getBorrowRequests, updateBorrowRequest, updateItemAvailability } from "@/lib/firestore"
 import type { BorrowRequest } from "@/types"
+import { useChat} from "@/lib/chat-context"
+import ChatIcon from "@mui/icons-material/Chat"
+import { useRouter } from "next/navigation"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -61,6 +54,8 @@ export default function RequestsPage() {
     severity: "success",
   })
   const { user } = useAuth()
+  const { startNewConversation } = useChat()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -165,6 +160,23 @@ export default function RequestsPage() {
     } catch (error: any) {
       console.error("Error approving request:", error)
       showNotification(error.message || "Failed to approve request", "error")
+    }
+  }
+
+  const handleStartChat = async (request: BorrowRequest) => {
+    if (!user) return
+  
+    try {
+  // Determine the other user's ID and name
+  const otherUserId = user.uid === request.ownerId ? request.borrowerId : request.ownerId
+  const otherUserName = user.uid === request.ownerId ? request.borrowerName : request.ownerName
+  
+  const conversationId = await startNewConversation(otherUserId, otherUserName, request.itemId, request.itemTitle)
+  
+  // Navigate to the chat page with the conversation ID
+  router.push(`/chat?id=${conversationId}`)
+    } catch (err: any) {
+  showNotification(err.message || "Failed to start conversation", "error")
     }
   }
 
@@ -338,6 +350,11 @@ export default function RequestsPage() {
                     )}
                   </Box>
                 )}
+                <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                  <Button variant="outlined" startIcon={<ChatIcon />} onClick={() => handleStartChat(request)}>
+                    Message Owner
+                  </Button>
+                </Box>
               </Paper>
             ))}
           </Box>

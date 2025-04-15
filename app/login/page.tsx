@@ -4,13 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
-import TextField from "@mui/material/TextField"
-import Typography from "@mui/material/Typography"
-import Paper from "@mui/material/Paper"
-import Container from "@mui/material/Container"
-import Alert from "@mui/material/Alert"
+import { Box, Button, TextField, Typography, Paper, Container, Alert } from "@mui/material"
 import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
@@ -35,7 +29,7 @@ export default function LoginPage() {
   return (
     <Container
       maxWidth="sm"
-      sx={{ py: 8, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}
+      sx={{ py: 8, display: "flex", justifyContent: "center", alignItems: "center" }}
     >
       <Paper elevation={3} sx={{ width: "100%", p: 4 }}>
         <Typography variant="h5" component="h1" gutterBottom>
@@ -85,7 +79,7 @@ export default function LoginPage() {
           <Box sx={{ textAlign: "center" }}>
             <Typography variant="body2">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" style={{ color: "primary", textDecoration: "none" }}>
+              <Link href="/signup" style={{ color: "#5f877f", textDecoration: "none" }}>
                 Sign up
               </Link>
             </Typography>

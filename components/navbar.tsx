@@ -14,9 +14,9 @@ export function Navbar() {
       <Toolbar sx={{ mt: 1, mb: 1, ml: 4, mr: 4, display: "flex", justifyContent: "space-between"  }}>
         <Link href="/" >
           <img
-            src="/1.png" // Path to your logo
+            src="/logo.png"
             alt="Samsarental Logo"
-            style={{ width: "auto", height: "65px", marginRight: "10px" }} // Adjust size as needed
+            style={{ width: "auto", height: "65px", marginRight: "10px" }} 
           />
         </Link>
 

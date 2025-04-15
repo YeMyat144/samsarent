@@ -37,3 +37,29 @@ export interface BorrowRequest {
   swapItemTitle?: string
   swapDuration?: number
 }
+
+export interface ChatMessage {
+  id: string
+  conversationId: string
+  senderId: string
+  senderName: string
+  content: string
+  createdAt: Date | Timestamp
+  read: boolean
+}
+
+export interface ChatConversation {
+  id: string
+  participants: string[] 
+  participantNames: Record<string, string> 
+  lastMessage?: {
+    content: string
+    senderId: string
+    createdAt: Date | Timestamp
+  }
+  updatedAt: Date | Timestamp
+  relatedItemId?: string
+  relatedItemTitle?: string
+  unreadCount?: Record<string, number> 
+}
+

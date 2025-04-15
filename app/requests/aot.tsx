@@ -1,25 +1,32 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { Box, Button, Container, Typography, CircularProgress, Alert, Snackbar, Chip, Divider } from "@mui/material"
+import { useRouter } from "next/navigation"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import Typography from "@mui/material/Typography"
+import Paper from "@mui/material/Paper"
+import Container from "@mui/material/Container"
+import Chip from "@mui/material/Chip"
+import Divider from "@mui/material/Divider"
+import CircularProgress from "@mui/material/CircularProgress"
+import Alert from "@mui/material/Alert"
+import Snackbar from "@mui/material/Snackbar"
+import ChatIcon from "@mui/icons-material/Chat"
 import { useAuth } from "@/lib/auth-context"
+import { useChat } from "@/lib/chat-context"
 import { getItem, createBorrowRequest, deleteItem } from "@/lib/firestore"
 import type { Item } from "@/types"
+import MenuItem from "@mui/material/MenuItem"
 import FormControl from "@mui/material/FormControl"
+import FormControlLabel from "@mui/material/FormControlLabel"
 import InputLabel from "@mui/material/InputLabel"
 import Select from "@mui/material/Select"
-import MenuItem from "@mui/material/MenuItem"
 import Switch from "@mui/material/Switch"
-import FormControlLabel from "@mui/material/FormControlLabel"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { useChat } from "@/lib/chat-context"
-import ChatIcon from "@mui/icons-material/Chat"
 
-export default function ItemDetailPage() {
-  const params = useParams()
-  const id = params.id as string
+export default function ItemDetailPage({ params }: { params: { id: string } }) {
   const [item, setItem] = useState<Item | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -41,7 +48,7 @@ export default function ItemDetailPage() {
     const fetchItem = async () => {
       try {
         setIsLoading(true)
-        const fetchedItem = await getItem(params.id as string)
+        const fetchedItem = await getItem(params.id)
         setItem(fetchedItem)
       } catch (error: any) {
         console.error("Error fetching item:", error)
@@ -199,7 +206,8 @@ export default function ItemDetailPage() {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
           {/* Image Section */}
           <Box sx={{ width: { xs: "100%", md: "40%" } }}>
             {item.imageUrl ? (
@@ -283,22 +291,17 @@ export default function ItemDetailPage() {
 
             <Divider sx={{ my: 3 }} />
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3, gap: 2 }}>
-              <Box sx={{ flex: 1, display: "flex", alignItems: "flex-start" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
               <Button variant="outlined" onClick={() => router.push("/dashboard")}>
-                Back
+                Back to Listings
               </Button>
-              </Box>
 
-              <Box sx={{ flex: 1 }}>
               {isOwner ? (
-                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button variant="contained" color="primary" onClick={handleDeleteItem}>
+                <Button variant="contained" color="error" onClick={handleDeleteItem}>
                   Delete Item
                 </Button>
-                </Box>
               ) : (
-                <Box>
+                <Box sx={{ mt: 3, width: "100%" }}>
                   {user && (
                     <Button
                       variant="outlined"
@@ -308,8 +311,8 @@ export default function ItemDetailPage() {
                     >
                       Message {item.ownerName}
                     </Button>
-                 )}
-                  
+                  )}
+
                   <FormControlLabel
                     control={
                       <Switch checked={isSwapMode} onChange={(e) => setIsSwapMode(e.target.checked)} color="primary" />
@@ -319,6 +322,10 @@ export default function ItemDetailPage() {
 
                   {isSwapMode && (
                     <Box sx={{ mt: 2, mb: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Swap Details
+                      </Typography>
+
                       <FormControl fullWidth sx={{ mb: 2 }}>
                         <InputLabel id="swap-item-label">Item to Swap</InputLabel>
                         <Select
@@ -356,7 +363,6 @@ export default function ItemDetailPage() {
                           <MenuItem value={30}>1 month</MenuItem>
                         </Select>
                       </FormControl>
-                      
                     </Box>
                   )}
 
@@ -376,13 +382,12 @@ export default function ItemDetailPage() {
                             ? "Request to Swap"
                             : "Request to Borrow"}
                   </Button>
-                  
                 </Box>
               )}
-              </Box>
             </Box>
           </Box>
         </Box>
+      </Paper>
 
       {/* Notification Snackbar */}
       <Snackbar open={notification.open} autoHideDuration={6000} onClose={closeNotification}>
