@@ -3,19 +3,9 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
-import Typography from "@mui/material/Typography"
-import Container from "@mui/material/Container"
-import CircularProgress from "@mui/material/CircularProgress"
-import Tabs from "@mui/material/Tabs"
-import Tab from "@mui/material/Tab"
-import Divider from "@mui/material/Divider"
-import TextField from "@mui/material/TextField"
-import InputAdornment from "@mui/material/InputAdornment"
+import { FormControlLabel, Checkbox, Box, Button, CircularProgress, Container, Divider, InputAdornment, Tab, Tabs, TextField, Typography } from "@mui/material"
 import SearchIcon from "@mui/icons-material/Search"
 import { useTheme, useMediaQuery } from "@mui/material"
-
 import { useAuth } from "@/lib/auth-context"
 import { getItems } from "@/lib/firestore"
 import { ItemCard } from "@/components/item-card"
@@ -39,6 +29,7 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [categories, setCategories] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -78,6 +69,7 @@ export default function Dashboard() {
       item.title.toLowerCase().includes(searchQuery) ||
       item.description?.toLowerCase().includes(searchQuery)
     )
+    .filter(item => (showAvailableOnly ? item.available : true))
 
   const itemsByCategory = items.reduce((acc, item) => {
     if (!acc[item.category]) {
@@ -122,46 +114,75 @@ export default function Dashboard() {
   >
     {/* Tabs Section (3/5 width on large screens) */}
     <Box
+  sx={{
+    flex: isSmallScreen ? "none" : 3,
+    width: "100%",
+    overflowX: "auto",
+  }}
+>
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      flexWrap: "wrap",
+    }}
+  >
+    <Tabs
+      value={selectedCategory}
+      onChange={handleCategoryChange}
+      variant="scrollable"
+      scrollButtons="auto"
+      allowScrollButtonsMobile
       sx={{
-        flex: isSmallScreen ? "none" : 3,
-        width: "100%",
-        overflowX: "auto",
+        flexGrow: 1,
+        '& .MuiTab-root': {
+          minWidth: 'unset',
+          padding: isSmallScreen ? '6px 12px' : '12px 16px',
+          fontSize: isSmallScreen ? '0.75rem' : '0.875rem',
+        },
+        '& .MuiTabs-scrollButtons': {
+          width: '24px',
+          '&.Mui-disabled': {
+            opacity: 0.3,
+          },
+        },
       }}
     >
-      <Tabs
-        value={selectedCategory}
-        onChange={handleCategoryChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        allowScrollButtonsMobile
-        sx={{
-          '& .MuiTab-root': {
-            minWidth: 'unset',
-            padding: isSmallScreen ? '6px 12px' : '12px 16px',
-            fontSize: isSmallScreen ? '0.75rem' : '0.875rem',
-          },
-          '& .MuiTabs-scrollButtons': {
-            width: '24px',
-            '&.Mui-disabled': {
-              opacity: 0.3,
-            },
-          },
-        }}
-      >
-        <Tab label="All" value="all" />
-        {categories.map(category => (
-          <Tab
-            key={category}
-            label={
-              isSmallScreen
-                ? categoryLabels[category]?.substring(0, 8) || category.substring(0, 8)
-                : categoryLabels[category] || category
-            }
-            value={category}
-          />
-        ))}
-      </Tabs>
-    </Box>
+      <Tab label="All" value="all" />
+      {categories.map(category => (
+        <Tab
+          key={category}
+          label={
+            isSmallScreen
+              ? categoryLabels[category]?.substring(0, 8) || category.substring(0, 8)
+              : categoryLabels[category] || category
+          }
+          value={category}
+        />
+      ))}
+    </Tabs>
+
+    <FormControlLabel
+      control={
+        <Checkbox
+          checked={showAvailableOnly}
+          onChange={() => setShowAvailableOnly(prev => !prev)}
+          size="small"
+        />
+      }
+      label="Available"
+      sx={{
+        ml: 2,
+        mr: isSmallScreen ? 1 : 2,
+        mt: isSmallScreen ? 1 : 0,
+        typography: "body2",
+        whiteSpace: "nowrap",
+      }}
+    />
+  </Box>
+</Box>
+
 
     {/* Search and Add Button Section (2/5 width on large screens) */}
     <Box
@@ -214,6 +235,8 @@ export default function Dashboard() {
 
 
       {/* Main Content */}
+    
+
       {items.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
           <Typography variant="h6" gutterBottom>
@@ -235,19 +258,33 @@ export default function Dashboard() {
       ) : selectedCategory === "all" ? (
         <Box>
           {Object.entries(itemsByCategory).map(([category, categoryItems]) => {
-            const visibleItems = categoryItems.filter(item =>
+            const visibleItems = categoryItems
+            .filter(item =>
               item.title.toLowerCase().includes(searchQuery) ||
               item.description?.toLowerCase().includes(searchQuery)
             )
+            .filter(item => (showAvailableOnly ? item.available : true))
 
             if (visibleItems.length === 0) return null
 
             return (
               <Box key={category} sx={{ mb: 6 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                  <Typography variant="h5" component="h2" sx={{ textTransform: "capitalize" }}>
+                 <Typography variant="h5" component="h2" sx={{ textTransform: "capitalize" }}>
                     {categoryLabels[category] || category}
                   </Typography>
+                  {/* <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={showAvailableOnly}
+                        onChange={() => setShowAvailableOnly(prev => !prev)}
+                      />
+                    }
+                    label="Available only"
+                    sx={{ ml: 2 }}
+                    labelPlacement="end"
+                  /> */}
+                  
                   <Divider sx={{ flex: 1, ml: 2 }} />
                 </Box>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
