@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { AppBar, Toolbar, Button, Box } from "@mui/material"
 import { useAuth } from "@/lib/auth-context"
 
+
 export function Navbar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
@@ -28,6 +29,9 @@ export function Navbar() {
               </Button>
               <Button component={Link} href="/requests" color={pathname === "/requests" ? "primary" : "inherit"} sx={{ fontSize: "17px" }}>
                 Requests
+              </Button>
+              <Button component={Link} href="/chat" color={pathname === "/chat" ? "primary" : "inherit"} sx={{ fontSize: "17px" }}>
+                Chat
               </Button>
               <Button color="error" variant="outlined" onClick={logout}>
                 Logout

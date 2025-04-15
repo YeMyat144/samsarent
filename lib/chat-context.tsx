@@ -9,6 +9,7 @@ import {
   subscribeToConversations,
   subscribeToMessages,
   getOrCreateConversation,
+  deleteConversation,
 } from "./chat"
 import type { ChatConversation, ChatMessage } from "@/types"
 
@@ -28,6 +29,7 @@ interface ChatContextType {
     itemTitle?: string,
   ) => Promise<string>
   refreshUnreadCount: () => Promise<void>
+  deleteCurrentConversation: () => Promise<void>
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -41,6 +43,7 @@ const ChatContext = createContext<ChatContextType>({
   selectConversation: async () => {},
   startNewConversation: async () => "",
   refreshUnreadCount: async () => {},
+  deleteCurrentConversation: async () => {},
 })
 
 export const useChat = () => useContext(ChatContext)
@@ -192,6 +195,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const deleteCurrentConversation = async () => {
+    if (!currentConversation) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      await deleteConversation(currentConversation.id)
+
+      // Reset current conversation
+      setCurrentConversation(null)
+      setMessages([])
+    } catch (err: any) {
+      setError(err.message || "Failed to delete conversation")
+      console.error("Error deleting conversation:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <ChatContext.Provider
       value={{
@@ -205,6 +228,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         selectConversation,
         startNewConversation,
         refreshUnreadCount,
+        deleteCurrentConversation,
       }}
     >
       {children}

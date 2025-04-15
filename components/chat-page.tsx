@@ -3,10 +3,18 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Box, Container, Paper, Typography, TextField, IconButton, CircularProgress, Alert, Button } from "@mui/material"
 import { useSearchParams } from "next/navigation"
+import {Box, Container, Paper, Typography, TextField, IconButton, Button} from "@mui/material"
+import Alert from "@mui/material/Alert"
+import CircularProgress from "@mui/material/CircularProgress"
+import Dialog from "@mui/material/Dialog"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContent from "@mui/material/DialogContent"
+import DialogContentText from "@mui/material/DialogContentText"
+import DialogTitle from "@mui/material/DialogTitle"
 import SendIcon from "@mui/icons-material/Send"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import DeleteIcon from "@mui/icons-material/Delete"
 import { useAuth } from "@/lib/auth-context"
 import { useChat } from "@/lib/chat-context"
 import { ConversationItem } from "@/components/chat/conversation-item"
@@ -16,9 +24,18 @@ export default function ChatPage() {
   const [messageInput, setMessageInput] = useState("")
   const [isMobileView, setIsMobileView] = useState(false)
   const [showConversations, setShowConversations] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { user } = useAuth()
-  const { conversations, currentConversation, messages, isLoading, error, sendNewMessage, selectConversation } =
-    useChat()
+  const {
+    conversations,
+    currentConversation,
+    messages,
+    isLoading,
+    error,
+    sendNewMessage,
+    selectConversation,
+    deleteCurrentConversation,
+  } = useChat()
   const searchParams = useSearchParams()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -64,6 +81,14 @@ export default function ChatPage() {
     }
   }
 
+  const handleDeleteConversation = async () => {
+    await deleteCurrentConversation()
+    setDeleteDialogOpen(false)
+    if (isMobileView) {
+      setShowConversations(true)
+    }
+  }
+
   if (!user) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
@@ -74,6 +99,7 @@ export default function ChatPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+    
       <Paper
         elevation={3}
         sx={{
@@ -142,30 +168,39 @@ export default function ChatPage() {
                 borderColor: "divider",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between",
               }}
             >
-              {isMobileView && (
-                <IconButton edge="start" onClick={() => setShowConversations(true)} sx={{ mr: 1 }}>
-                  <ArrowBackIcon />
-                </IconButton>
-              )}
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {isMobileView && (
+                  <IconButton edge="start" onClick={() => setShowConversations(true)} sx={{ mr: 1 }}>
+                    <ArrowBackIcon />
+                  </IconButton>
+                )}
 
-              {currentConversation ? (
-                <Box>
-                  <Typography variant="h6">
-                    {currentConversation.participantNames[
-                      currentConversation.participants.find((id) => id !== user.uid) || ""
-                    ] || "Unknown"}
-                  </Typography>
-
-                  {currentConversation.relatedItemTitle && (
-                    <Typography variant="caption" color="text.secondary">
-                      Re: {currentConversation.relatedItemTitle}
+                {currentConversation ? (
+                  <Box>
+                    <Typography variant="h6">
+                      {currentConversation.participantNames[
+                        currentConversation.participants.find((id) => id !== user.uid) || ""
+                      ] || "Unknown"}
                     </Typography>
-                  )}
-                </Box>
-              ) : (
-                <Typography variant="h6">Select a conversation</Typography>
+
+                    {currentConversation.relatedItemTitle && (
+                      <Typography variant="caption" color="text.secondary">
+                        Re: {currentConversation.relatedItemTitle}
+                      </Typography>
+                    )}
+                  </Box>
+                ) : (
+                  <Typography variant="h6">Select a conversation</Typography>
+                )}
+              </Box>
+
+              {currentConversation && (
+                <IconButton color="error" onClick={() => setDeleteDialogOpen(true)} aria-label="Delete conversation">
+                  <DeleteIcon />
+                </IconButton>
               )}
             </Box>
 
@@ -238,6 +273,22 @@ export default function ChatPage() {
           </Box>
         )}
       </Paper>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Conversation</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this conversation? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteConversation} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }

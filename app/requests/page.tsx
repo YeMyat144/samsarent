@@ -103,33 +103,33 @@ export default function RequestsPage() {
 
   const handleApproveWithDelivery = async () => {
     if (!approvalDialog.request) return
-
+  
     // Validate required fields
     if (!deliveryLocation.trim() || !deliveryDateTime.trim()) {
       showNotification("Please fill in both location and day/time fields", "error")
       return
     }
-
+  
     try {
       // Format the delivery message
       const deliveryMessage = `I will deliver at ${deliveryLocation} on ${deliveryDateTime}.${
         additionalInfo ? `\n\nAdditional information: ${additionalInfo}` : ""
       }`
-
+  
       const request = approvalDialog.request
       const isSwapRequest = request.isSwap === true
-
+  
       // Update the request with delivery information
       await updateBorrowRequest(request.id, "approved", deliveryMessage, isSwapRequest ? false : paymentRequired)
-
+  
       // Update item availability - make the requested item unavailable
       await updateItemAvailability(request.itemId, false)
-
+  
       // If it's a swap, also update the swap item's availability
       if (isSwapRequest && request.swapItemId) {
         await updateItemAvailability(request.swapItemId, false)
       }
-
+  
       // Update local state
       setIncomingRequests((prev) =>
         prev.map((req) =>
@@ -140,22 +140,22 @@ export default function RequestsPage() {
                 deliveryMessage,
                 paymentRequired: isSwapRequest ? false : paymentRequired,
               }
-            : req,
-        ),
+            : req
+        )
       )
-
+  
       // Close the dialog and reset form
       setApprovalDialog({ open: false, request: null })
       setDeliveryLocation("")
       setDeliveryDateTime("")
       setAdditionalInfo("")
       setPaymentRequired(false)
-
+  
       showNotification(
         isSwapRequest
           ? "Swap request approved successfully! The other user has been notified."
           : "Request approved successfully! The borrower has been notified.",
-        "success",
+        "success"
       )
     } catch (error: any) {
       console.error("Error approving request:", error)
@@ -222,10 +222,6 @@ export default function RequestsPage() {
 
   return (
     <Container sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={4}>
-        Borrow Requests
-      </Typography>
-
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="request tabs">
           <Tab label={`Incoming Requests (${incomingRequests.length})`} id="tab-0" />
