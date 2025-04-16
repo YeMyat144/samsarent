@@ -99,7 +99,7 @@ export function ItemCard({ item }: ItemCardProps) {
               {item.category}
             </Typography>
             <Typography variant="body2" fontWeight={600} color="primary.main">
-              ${item.price.toFixed(2)}/day
+              ${item.price}/day
             </Typography>
           </Box>
         </CardContent>

@@ -227,7 +227,7 @@ export default function Dashboard() {
           flexShrink: 0,
         }}
       >
-        Add
+        Add Item
       </Button>
     </Box>
   </Box>
@@ -273,17 +273,6 @@ export default function Dashboard() {
                  <Typography variant="h5" component="h2" sx={{ textTransform: "capitalize" }}>
                     {categoryLabels[category] || category}
                   </Typography>
-                  {/* <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={showAvailableOnly}
-                        onChange={() => setShowAvailableOnly(prev => !prev)}
-                      />
-                    }
-                    label="Available only"
-                    sx={{ ml: 2 }}
-                    labelPlacement="end"
-                  /> */}
                   
                   <Divider sx={{ flex: 1, ml: 2 }} />
                 </Box>

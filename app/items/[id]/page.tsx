@@ -277,7 +277,7 @@ export default function ItemDetailPage() {
                 <Typography variant="h6" gutterBottom>
                   Daily Price
                 </Typography>
-                <Typography variant="body1">${item.price.toFixed(2)}</Typography>
+                <Typography variant="body1">${item.price}</Typography>
               </Box>
             </Box>
 

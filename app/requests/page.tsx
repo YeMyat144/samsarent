@@ -13,11 +13,12 @@ import TextField from "@mui/material/TextField"
 import FormControlLabel from "@mui/material/FormControlLabel"
 import Checkbox from "@mui/material/Checkbox"
 import { useAuth } from "@/lib/auth-context"
-import { getBorrowRequests, updateBorrowRequest, updateItemAvailability } from "@/lib/firestore"
-import type { BorrowRequest } from "@/types"
+import { getBorrowRequests, updateBorrowRequest, updateItemAvailability, getItem } from "@/lib/firestore"
+import type { BorrowRequest, Item } from "@/types"
 import { useChat} from "@/lib/chat-context"
 import ChatIcon from "@mui/icons-material/Chat"
 import { useRouter } from "next/navigation"
+import { SwapAnimation } from "@/components/swap-animation"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -53,6 +54,15 @@ export default function RequestsPage() {
     message: "",
     severity: "success",
   })
+  const [swapAnimation, setSwapAnimation] = useState<{
+    open: boolean
+    item1: Item | null
+    item2: Item | null
+  }>({
+    open: false,
+    item1: null,
+    item2: null,
+  }) 
   const { user } = useAuth()
   const { startNewConversation } = useChat()
   const router = useRouter()
@@ -126,9 +136,33 @@ export default function RequestsPage() {
       await updateItemAvailability(request.itemId, false)
   
       // If it's a swap, also update the swap item's availability
-      if (isSwapRequest && request.swapItemId) {
-        await updateItemAvailability(request.swapItemId, false)
-      }
+      // if (isSwapRequest && request.swapItemId) {
+      //   await updateItemAvailability(request.swapItemId, false)
+      // }
+      let item1 = null
+      let item2 = null
+      
+            if (isSwapRequest && request.swapItemId) {
+              // Fetch both items for the animation
+              item1 = await getItem(request.itemId)
+              item2 = await getItem(request.swapItemId)
+      
+              // Update item availability - make both items unavailable
+              await updateItemAvailability(request.itemId, false)
+              await updateItemAvailability(request.swapItemId, false)
+      
+              // Show swap animation
+              if (item1 && item2) {
+                setSwapAnimation({
+                  open: true,
+                  item1,
+                  item2,
+                })
+              }
+            } else {
+              // Just update the requested item's availability
+              await updateItemAvailability(request.itemId, false)
+            }
   
       // Update local state
       setIncomingRequests((prev) =>
@@ -150,13 +184,15 @@ export default function RequestsPage() {
       setDeliveryDateTime("")
       setAdditionalInfo("")
       setPaymentRequired(false)
-  
-      showNotification(
+      
+      if (!isSwapRequest || !item1 || !item2) {
+        showNotification(
         isSwapRequest
           ? "Swap request approved successfully! The other user has been notified."
           : "Request approved successfully! The borrower has been notified.",
         "success"
       )
+    }
     } catch (error: any) {
       console.error("Error approving request:", error)
       showNotification(error.message || "Failed to approve request", "error")
@@ -203,6 +239,18 @@ export default function RequestsPage() {
   const closeNotification = () => {
     setNotification({ ...notification, open: false })
   }
+
+  const handleCloseSwapAnimation = () => {
+    setSwapAnimation({
+      open: false,
+      item1: null,
+      item2: null,
+    })
+
+    // Show success notification after animation closes
+    showNotification("Swap request approved successfully! Both users have been notified.", "success")
+  }
+
 
   if (isLoading) {
     return (
@@ -445,6 +493,15 @@ export default function RequestsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Swap Animation Dialog */}
+      <SwapAnimation
+        open={swapAnimation.open}
+        onClose={handleCloseSwapAnimation}
+        item1={swapAnimation.item1}
+        item2={swapAnimation.item2}
+      />
+
 
       {/* Notification Snackbar */}
       <Snackbar open={notification.open} autoHideDuration={6000} onClose={closeNotification}>
