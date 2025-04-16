@@ -157,12 +157,9 @@ export function Navbar() {
               <Button
                 component={Link}
                 href="/login"
+                color={pathname === "/login" ? "primary" : "inherit"}
                 sx={{
-                  color: "white",
-                  borderBottom: pathname === "/login" ? 2 : 0,
-                  borderColor: "secondary.main",
-                  borderRadius: 0,
-                  pb: 0.5,
+                  fontSize: "17px" ,
                 }}
               >
                 Login
@@ -173,8 +170,9 @@ export function Navbar() {
                 variant="contained"
                 size="small"
                 sx={{
-                  bgcolor: "secondary.main",
-                  color: "text.primary",
+                  bgcolor: "primary.main",
+                  fontSize: "17px" ,
+                  color: "white",
                   "&:hover": {
                     bgcolor: "secondary.light",
                   },
