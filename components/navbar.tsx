@@ -45,7 +45,7 @@ export function Navbar() {
         <Link href="/" >
           <img
             src="/logo.png"
-            alt="Samsarental Logo"
+            alt="Samsarent Logo"
             style={{ width: "auto", height: "65px", marginRight: "10px" }} 
           />
         </Link> 

@@ -63,7 +63,7 @@ export default function Home() {
             <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: "center", gap: 4 }}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h2" component="h1" fontWeight="bold" gutterBottom>
-                  Samsarental
+                  Samsarent
                 </Typography>
                 <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
                   Borrow what you need, share what you don't
@@ -185,7 +185,7 @@ export default function Home() {
         <Box sx={{ bgcolor: "background.paper", py: 4, borderTop: 1, borderColor: "divider" }}>
           <Container maxWidth="lg">
             <Typography variant="body2" color="text.secondary" textAlign="center">
-              © {new Date().getFullYear()} Samsarental. All rights reserved.
+              © {new Date().getFullYear()} Samsarent. All rights reserved.
             </Typography>
           </Container>
         </Box>

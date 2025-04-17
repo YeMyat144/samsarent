@@ -164,7 +164,7 @@ export default function LoginPage() {
           
           <Box sx={{ textAlign: "center", mt: 4 }}>
             <Typography variant="body2" color="text.secondary">
-              © {new Date().getFullYear()} Samsarental. All rights reserved.
+              © {new Date().getFullYear()} Samsarent. All rights reserved.
             </Typography>
           </Box>
         </Container>
