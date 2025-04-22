@@ -1,14 +1,14 @@
-# Samsarental
+# Samsarent
 
-Samsarental is a platform where users can list their items for others to borrow and request to borrow items from other users. The application handles the entire borrowing lifecycle, from listing items to approving borrow requests and managing the borrowing process. Additionally, Samsarental features a swap function that allows users to offer their items for exchange. 
+Samsarent is a platform where users can list their items for others to borrow and request to borrow items from other users. The application handles the entire borrowing lifecycle, from listing items to approving borrow requests and managing the borrowing process. Additionally, Samsarental features a swap function that allows users to offer their items for exchange. 
 
-![Samarental Demo](https://i.ibb.co/twQrbTqP/demo.png)
+![Samarent Demo](https://i.ibb.co/v4gHpFJg/Screenshot-2025-04-22-142317.png)
 
 ## Features
 
 - **User Authentication**: Sign up and login functionality
 - **Item Management**: Add, view, and delete items
-- **Borrowing System**: Request to borrow items, approve/reject requests
+- **Borrowing System**: Request to borrow items, Request to swap items, approve/reject requests
 - **Delivery Coordination**: Lenders can specify delivery details when approving requests
 - **Notifications**: Users are notified of request status changes
 - **Responsive Design**: Works on mobile, tablet, and desktop devices
