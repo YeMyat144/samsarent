@@ -86,25 +86,31 @@ export default function NewItemPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
+  
     if (!user) {
       setError("You must be logged in to add an item")
       return
     }
-
+  
+    // Field validation
+    if (!title || !description || !category || !price || !file) {
+      setError("Please fill in all fields and upload an image.")
+      return
+    }
+  
     setIsLoading(true)
     setError("")
-
+    
     try {
       let imageUrl = ""
-
+  
       if (file) {
         imageUrl = await uploadImage(file)
       }
-
+  
       await addItem({
         title,
-        description: description,
+        description,
         category,
         price: Number.parseFloat(price),
         ownerId: user.uid,
@@ -113,7 +119,7 @@ export default function NewItemPage() {
         createdAt: new Date(),
         imageUrls: imageUrl ? [imageUrl] : [],
       })
-
+  
       router.push("/dashboard")
     } catch (err: any) {
       setError(err.message || "Failed to add item. Please check your connection and try again.")
@@ -121,6 +127,7 @@ export default function NewItemPage() {
       setIsLoading(false)
     }
   }
+  
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
