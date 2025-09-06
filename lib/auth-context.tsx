@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import {
-  type User,
+  type User as FirebaseUser,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -11,7 +11,8 @@ import {
   type UserCredential
 } from "firebase/auth"
 import { auth } from "./firebase"
-import { createUser } from "./firestore"
+import { createUser, getUser } from "./firestore"
+import type { User } from "@/types"
 
 interface AuthContextType {
   user: User | null
@@ -19,6 +20,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>
   login: (email: string, password: string) => Promise<UserCredential> // Correct return type
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,7 +28,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signup: async () => {},
   login: async () => { return {} as UserCredential }, // Default empty return type
-  logout: async () => {}
+  logout: async () => {},
+  refreshUser: async () => {}
 })
 
 export const useAuth = () => useContext(AuthContext)
@@ -36,8 +39,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // Fetch the full user data from Firestore
+        try {
+          const userData = await getUser(firebaseUser.uid)
+          if (userData) {
+            setUser(userData)
+          } else {
+            // If user data doesn't exist in Firestore, create it
+            await createUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email || "",
+              displayName: firebaseUser.displayName || "",
+              createdAt: new Date(),
+            })
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email || "",
+              displayName: firebaseUser.displayName || "",
+              createdAt: new Date(),
+            })
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error)
+          setUser(null)
+        }
+      } else {
+        setUser(null)
+      }
       setLoading(false)
     })
 
@@ -61,6 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName: name,
           createdAt: new Date(),
         })
+
+        // Update the local user state with the new user data
+        setUser({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email || "",
+          displayName: name,
+          createdAt: new Date(),
+        })
       }
     } catch (error) {
       throw error
@@ -75,12 +113,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return signOut(auth)
   }
 
+  const refreshUser = async () => {
+    if (auth.currentUser) {
+      try {
+        const userData = await getUser(auth.currentUser.uid)
+        if (userData) {
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error("Error refreshing user data:", error)
+      }
+    }
+  }
+
   const value = {
     user,
     loading,
     signup,
     login,
     logout,
+    refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

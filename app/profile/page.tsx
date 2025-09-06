@@ -17,6 +17,7 @@ import Alert from "@mui/material/Alert"
 import { useAuth } from "@/lib/auth-context"
 import { getUserItems, getBorrowRequests } from "@/lib/firestore"
 import { ItemCard } from "@/components/item-card"
+import { ContactSettings } from "@/components/contact-settings"
 import type { Item } from "@/types"
 
 interface TabPanelProps {
@@ -119,9 +120,15 @@ export default function ProfilePage() {
 
   // Format the date when the user joined
   const formatMemberSince = () => {
-    if (!user?.metadata?.creationTime) return "Unknown"
+    // Try user.createdAt, fallback to user.metadata?.creationTime if available
+    const creationTime =
+      (user as any)?.createdAt ||
+      (user as any)?.metadata?.creationTime ||
+      null
 
-    const creationDate = new Date(user.metadata.creationTime)
+    if (!creationTime) return "Unknown"
+
+    const creationDate = new Date(creationTime)
     return creationDate.toLocaleDateString(undefined, {
       year: "numeric",
       month: "long",
@@ -216,6 +223,7 @@ export default function ProfilePage() {
             <Tab label="Listed Items" id="profile-tab-0" />
             <Tab label="Rented Items" id="profile-tab-1" />
             <Tab label="Swapped Items" id="profile-tab-2" />
+            <Tab label="Contact Settings" id="profile-tab-3" />
           </Tabs>
         </Box>
 
@@ -271,6 +279,10 @@ export default function ProfilePage() {
               ))}
             </Box>
           )}
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={3}>
+          <ContactSettings />
         </TabPanel>
     </Container>
   )

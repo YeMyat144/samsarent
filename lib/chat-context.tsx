@@ -11,12 +11,14 @@ import {
   getOrCreateConversation,
   deleteConversation,
 } from "./chat"
-import type { ChatConversation, ChatMessage } from "@/types"
+import { getUser } from "./firestore"
+import type { ChatConversation, ChatMessage, User } from "@/types"
 
 interface ChatContextType {
   conversations: ChatConversation[]
   currentConversation: ChatConversation | null
   messages: ChatMessage[]
+  otherUser: User | null
   unreadCount: number
   isLoading: boolean
   error: string | null
@@ -36,6 +38,7 @@ const ChatContext = createContext<ChatContextType>({
   conversations: [],
   currentConversation: null,
   messages: [],
+  otherUser: null,
   unreadCount: 0,
   isLoading: false,
   error: null,
@@ -52,6 +55,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<ChatConversation[]>([])
   const [currentConversation, setCurrentConversation] = useState<ChatConversation | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [otherUser, setOtherUser] = useState<User | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +67,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setConversations([])
       setCurrentConversation(null)
       setMessages([])
+      setOtherUser(null)
       setUnreadCount(0)
       return
     }
@@ -110,6 +115,28 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     })
 
     return () => unsubscribe()
+  }, [currentConversation, user])
+
+  // Fetch other user's information when current conversation changes
+  useEffect(() => {
+    if (!currentConversation || !user) {
+      setOtherUser(null)
+      return
+    }
+
+    const otherUserId = currentConversation.participants.find(id => id !== user.uid)
+    if (otherUserId) {
+      getUser(otherUserId)
+        .then(userData => {
+          if (userData) {
+            setOtherUser(userData)
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching other user:", err)
+          setOtherUser(null)
+        })
+    }
   }, [currentConversation, user])
 
   const selectConversation = async (conversationId: string) => {
@@ -221,6 +248,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         conversations,
         currentConversation,
         messages,
+        otherUser,
         unreadCount,
         isLoading,
         error,

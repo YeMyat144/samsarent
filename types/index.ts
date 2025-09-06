@@ -5,6 +5,13 @@ export interface User {
   email: string
   displayName: string
   createdAt: Date | Timestamp
+  contactMethods?: {
+    line?: string
+    messenger?: string
+    whatsapp?: string
+    telegram?: string
+    phone?: string
+  }
 }
 
 export interface Item {

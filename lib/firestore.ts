@@ -44,6 +44,15 @@ export const getUser = async (userId: string) => {
   return null
 }
 
+export const updateUser = async (userId: string, updates: Partial<User>) => {
+  try {
+    const userRef = doc(db, "users", userId)
+    await updateDoc(userRef, updates)
+  } catch (error) {
+    handleFirestoreError(error)
+  }
+}
+
 // Item operations
 export const addItem = async (itemData: Omit<Item, "id">) => {
   try {

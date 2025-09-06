@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useChat } from "@/lib/chat-context"
 import { ConversationItem } from "@/components/chat/conversation-item"
 import { MessageItem } from "@/components/chat/message-item"
+import { ContactMethods } from "@/components/contact-methods"
 
 export default function ChatPage() {
   const [messageInput, setMessageInput] = useState("")
@@ -30,6 +31,7 @@ export default function ChatPage() {
     conversations,
     currentConversation,
     messages,
+    otherUser,
     isLoading,
     error,
     sendNewMessage,
@@ -123,6 +125,9 @@ export default function ChatPage() {
           >
             <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
               <Typography variant="h6">Conversations</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                Secure internal messaging
+              </Typography>
             </Box>
 
             <Box sx={{ flex: 1, overflow: "auto" }}>
@@ -132,8 +137,11 @@ export default function ChatPage() {
                 </Box>
               ) : conversations.length === 0 ? (
                 <Box sx={{ p: 3, textAlign: "center" }}>
-                  <Typography color="text.secondary">
+                  <Typography color="text.secondary" gutterBottom>
                     No conversations yet. Start by messaging a lender or borrower.
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    All conversations are private and secure
                   </Typography>
                 </Box>
               ) : (
@@ -171,7 +179,7 @@ export default function ChatPage() {
                 justifyContent: "space-between",
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", flex: 1 }}>
                 {isMobileView && (
                   <IconButton edge="start" onClick={() => setShowConversations(true)} sx={{ mr: 1 }}>
                     <ArrowBackIcon />
@@ -179,7 +187,7 @@ export default function ChatPage() {
                 )}
 
                 {currentConversation ? (
-                  <Box>
+                  <Box sx={{ flex: 1 }}>
                     <Typography variant="h6">
                       {currentConversation.participantNames[
                         currentConversation.participants.find((id) => id !== user.uid) || ""
@@ -190,6 +198,13 @@ export default function ChatPage() {
                       <Typography variant="caption" color="text.secondary">
                         Re: {currentConversation.relatedItemTitle}
                       </Typography>
+                    )}
+
+                    {/* Contact Methods */}
+                    {otherUser && (
+                      <Box sx={{ mt: 1 }}>
+                        <ContactMethods user={otherUser} variant="compact" showLabel={false} />
+                      </Box>
                     )}
                   </Box>
                 ) : (
@@ -230,8 +245,13 @@ export default function ChatPage() {
                   <Typography color="text.secondary">Select a conversation to start chatting</Typography>
                 </Box>
               ) : messages.length === 0 ? (
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                  <Typography color="text.secondary">No messages yet. Start the conversation!</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", textAlign: "center", p: 3 }}>
+                  <Typography color="text.secondary" gutterBottom>
+                    No messages yet. Start the conversation!
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    This is your secure, private communication channel
+                  </Typography>
                 </Box>
               ) : (
                 <>
@@ -245,29 +265,48 @@ export default function ChatPage() {
 
             {/* Message Input */}
             {currentConversation && (
-              <Box
-                component="form"
-                onSubmit={handleSendMessage}
-                sx={{
-                  p: 2,
-                  borderTop: "1px solid",
-                  borderColor: "divider",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <TextField
-                  fullWidth
-                  placeholder="Type a message..."
-                  variant="outlined"
-                  size="small"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  autoComplete="off"
-                />
-                <IconButton color="primary" type="submit" disabled={!messageInput.trim()} sx={{ ml: 1 }}>
-                  <SendIcon />
-                </IconButton>
+              <Box>
+                {/* Primary Communication Notice */}
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "primary.50",
+                    borderTop: "1px solid",
+                    borderColor: "primary.200",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <Typography variant="caption" color="primary.main" sx={{ fontWeight: 500 }}>
+                    💬 Primary communication channel - All messages are secure and private
+                  </Typography>
+                </Box>
+                
+                <Box
+                  component="form"
+                  onSubmit={handleSendMessage}
+                  sx={{
+                    p: 2,
+                    borderTop: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    placeholder="Type a message..."
+                    variant="outlined"
+                    size="small"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <IconButton color="primary" type="submit" disabled={!messageInput.trim()} sx={{ ml: 1 }}>
+                    <SendIcon />
+                  </IconButton>
+                </Box>
               </Box>
             )}
           </Box>
